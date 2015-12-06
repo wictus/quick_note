@@ -1,0 +1,1119 @@
+#!/usr/bin/python
+
+import os
+import re
+import sys
+import time
+import datetime
+import unicodedata
+import uuid
+
+import traceback
+import logging
+
+###
+### GLOBAL DATA
+###
+
+class global_data(object):
+    LOCAL_SETUP = """# Uncomment and modify if necessary:
+# template=/path/to/the/template
+# editor=vim 
+# ext=.tex
+# convert=pdflatex 
+# res=.pdf
+# viewer=xpdf -rv
+
+"""
+    local_setup = False
+    setup = {}
+
+    arguments = []
+    
+    SETUP = """# Note template full (!) path only if different (!) from ../TEMPLATE/template.tex.
+# The note is taken from this file from the text between:
+#    % begin_note
+#    and 
+#    % end_note
+# The full file will be compiled using the "convert" command - below.
+# template=path/to/template/eg/template.tex
+
+# Computer name or other name attached to note:
+notename = computer
+
+# Full (!) path to note directory only if different (!) from ../NOTES.
+# notepath=/path/to/NOTES/
+
+# Full (!) path to note directory only if different (!) from ../TRASH.
+# trashpath=/path/to/TRASH/
+
+# Maximum notes to output, if not set all will be printed:
+max=10
+
+# Editor command:
+editor = vim +6
+
+# Template extension:
+ext = .tex
+
+# Turn template into pdf, dvi, etc. The first argument is the directory to write pdf, dvi etc. to. 
+convert = pdflatex 
+
+# Extension of the resulting file:
+res = .pdf
+
+# Command to view:
+viewer = xpdf -rv
+
+"""
+
+    TEMPLATE = """\documentclass{article}
+
+\\begin{document}
+
+% begin_note
+
+% end_note
+
+\end{document}
+"""
+
+    note_title = None
+    note_key_words = None
+    note_yek_words = None
+    note_file_directory = None
+    note_info_path = None
+    note_note_path = None
+    note_tex_path = None
+    note_date = None
+    note_files = None
+    note_uuid4 = None
+
+    note_number = None
+
+    max_plus = 0
+
+###
+### THE FUNCTIONS
+###
+
+#create_note = lambda:sys.stdout.write("create_note()")
+
+def create_note():
+    if(global_data.note_title == None):
+        global_data.note_title = ' '
+    if(global_data.note_title == None or global_data.note_key_words == None):
+        sys.stdout.write('Not enough data to create note, try:\n$note title "some title" keywords "some key" words create\n.')
+        if(lock != None): rel_lock()
+        exit(1)
+    attempt = 0
+    is_created = False
+    while(attempt <= 10 and (not is_created)):
+        ticks = int(time.time() * 1000)
+        global_data.note_date = [str(ticks) , 
+                datetime.date.today().strftime("%d") , 
+                datetime.date.today().strftime("%m") , 
+                datetime.date.today().strftime("%y") ,
+                datetime.date.today().strftime("%d_%m_%y")] 
+        global_data.note_uuid4 = str(uuid.uuid4())
+        global_data.note_file_directory = os.path.join(global_data.setup['notepath'][-1] , "".join([str(ticks),"_",global_data.note_uuid4]))
+        attempt += 1
+        try:
+            os.stat(global_data.note_file_directory)
+            time.sleep(0.001)
+        except os.error as e:
+            if(not is_created):
+                os.mkdir(global_data.note_file_directory)
+                os.mkdir(os.path.join(global_data.note_file_directory , "FILES"))
+                os.mkdir(os.path.join(global_data.note_file_directory , "DATA"))
+                is_created = True
+    if(not is_created):
+        sys.stdout.write('Could not create note directory after ' + str(attempt) + ' attempts.')
+        if(lock != None): rel_lock()
+        exit(1)
+    if(global_data.local_setup):
+        local_setup_path = os.path.join(global_data.note_file_directory ,  
+                'setup')
+        local = open(local_setup_path , 'w')
+        print local_setup_path
+        local.write(global_data.LOCAL_SETUP)
+        local.close()
+        os.system(global_data.setup['editor'][-1] + ' ' + local_setup_path)
+        get_setup(local_setup_path)  
+    global_data.note_info_path = os.path.join(global_data.note_file_directory , "DATA" , '.' + "".join([global_data.note_date[0],"_",global_data.note_uuid4]))
+    global_data.note_note_path = os.path.join(global_data.note_file_directory , "DATA" , '.' + "".join([global_data.note_date[0],"_",global_data.note_uuid4]) + 
+            ".note")
+    global_data.note_tex_path = os.path.join(global_data.note_file_directory , "DATA" , "".join([global_data.note_date[0],"_",global_data.note_uuid4]) + 
+            global_data.setup['ext'][-1])
+    template = open(global_data.setup['textemplate'][-1] , 'r')
+    output = open(global_data.note_tex_path , 'w')
+    if(global_data.note_yek_words == None):
+        global_data.note_yek_words = []
+    for word in global_data.note_yek_words:
+        try:
+            global_data.note_key_words.remove(word)
+        except:
+            print word + ' not found in note key words.'
+    for line in template.readlines():
+        if(not re.search(r'begin_note' , line) == None):
+            output.write(line)
+        else:
+            output.write(line)
+    output.close()
+    template.close()
+    note = open(global_data.note_note_path , 'w')
+    os.system(global_data.setup['editor'][-1] + ' ' + global_data.note_tex_path)
+    insert = False
+    note = open(global_data.note_note_path , 'w')
+    output = open(global_data.note_tex_path , 'r')
+    for line in output.readlines():
+        if((not re.search(r'begin_note' , line) == None) or (not re.search(r'end_note' , line) == None)):
+            insert = not insert
+            continue
+        if(insert):
+            note.write(line)
+    output.close()
+    note.close()
+    info = open(global_data.note_info_path , 'w')
+    info.write(global_data.note_title + '\n')
+    for word in global_data.note_key_words:
+        info.write(word + '\\')
+    info.write('\n')
+    info.write(global_data.note_date[0] + '\n')
+    info.write(global_data.note_date[1] + '\n')
+    info.write(global_data.note_date[2] + '\n')
+    info.write(global_data.note_date[3] + '\n')
+    info.write(global_data.note_date[4] + '\n')
+    info.write(global_data.note_uuid4 + '\n')
+    info.write(global_data.setup["notename"][-1] + '\n')
+    info.close()
+    if(not global_data.note_files == None):
+        for f in global_data.note_files:
+            os.system('cp -r ' + f + ' ' +  os.path.join(global_data.note_file_directory , "FILES"))
+    current = os.getcwd()
+    #print os.path.join(global_data.note_file_directory , "FILES") 
+    os.chdir(os.path.join(global_data.note_file_directory , "DATA"))
+    #print global_data.setup['convert'][-1] + ' ' + global_data.note_tex_path
+    os.system(global_data.setup['convert'][-1] + ' ' + global_data.note_tex_path)
+    os.chdir(current)
+    if(global_data.local_setup):
+        global_data.setup = {}
+        get_setup(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'setup'))
+    open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection') , 'w').close()
+    selectionFILE = open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection') , 'r+')
+    files = os.listdir(global_data.setup['notepath'][-1])
+    files.sort()
+    i = 0
+    for f in files:
+        open_note(f)
+        selectionFILE.write(global_data.note_file_directory + '\n')
+    selectionFILE.close()
+
+
+#list_notes = lambda:sys.stdout.write("list_notes()")
+
+def list_notes():
+    open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection') , 'w').close()
+    selectionFILE = open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection') , 'r+')
+    files = os.listdir(global_data.setup['notepath'][-1])
+    files.sort()
+    i = 0
+    for f in files:
+        open_note(f)
+
+        i += 1
+        if(i > global_data.note_number - int(global_data.setup['max'][-1]) - global_data.max_plus):
+            sys.stdout.write('\x1b[1;35m')
+            print '----------------------------------------------'
+            print str(global_data.note_number - i + 1) + '\t' + f
+            print '----------------------------------------------'
+            sys.stdout.write('\x1b[0m')
+            print '* key words:'
+            for word in global_data.note_key_words:
+                sys.stdout.write(' ' + word + ' ')
+            sys.stdout.write("\n")
+            print '* title:'
+            sys.stdout.write('\x1b[1m')
+            print global_data.note_title.strip()
+            sys.stdout.write('\x1b[0m')
+            print '* date (D/M/Y):'
+            print global_data.note_date[1] + '/' + global_data.note_date[2] + '/' + global_data.note_date[3]
+            print '* note:'
+            #sys.stdout.write('\x1b[1m')
+            note = open(global_data.note_note_path , 'r')
+            for line in note.readlines():
+                sys.stdout.write(line)
+            note.close()
+            #sys.stdout.write('\x1b[0m')
+        selectionFILE.write(global_data.note_file_directory + '\n')
+
+    selectionFILE.close()
+
+#key_words = lambda:sys.stdout.write("key_words()")
+
+def key_words():
+    if(global_data.note_key_words == None):
+        global_data.note_key_words = []
+    for keyword in global_data.arguments:
+        words = keyword.strip()
+        print 
+        global_data.note_key_words.append(
+           unicodedata.normalize('NFKD', words.decode("utf-8")).encode('ascii','ignore').upper())
+
+#yek_words = lambda:sys.stdout.write("yek_words()")
+
+def yek_words():
+    if(global_data.note_yek_words == None):
+        global_data.note_yek_words = []
+    for keyword in global_data.arguments:
+        words = keyword.strip()
+        global_data.note_yek_words.append(words.upper())
+
+#title_note = lambda:sys.stdout.write("title_note()")
+
+def title_note():
+    if(len(global_data.arguments) != 1):
+        sys.stdout.write('A note can have only one title.')
+        exit(1)
+    global_data.note_title = global_data.arguments[0]
+
+#find_note = lambda:sys.stdout.write("find_note()")
+
+def find_note():
+    open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection') , 'w').close()
+    selectionFILE = open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection') , 'r+')
+    note_key = []
+    for keyword in global_data.arguments:
+        words = keyword.strip()
+        #for word in words:
+        note_key.append(words.upper())
+    scores = []
+    files = os.listdir(global_data.setup['notepath'][-1])
+    files.sort()
+    for f in files:
+        open_note(f)
+
+        score = 0
+
+        for keyword in note_key:
+            for key in global_data.note_key_words:
+                score += len(re.findall(keyword , key))
+                score += len(re.findall(key , keyword))
+        
+        scores.append([score , f , global_data.note_file_directory , global_data.note_key_words , global_data.note_title])
+
+    scores = sorted(scores , key=lambda x:x[0])
+    i = 0
+    for result in scores:
+        i += 1
+        if(i > global_data.note_number - int(global_data.setup['max'][-1]) - global_data.max_plus):
+            sys.stdout.write('\x1b[1;35m')
+            print '----------------------------------------------'
+            print str(global_data.note_number - i + 1) + '\t' + result[1]
+            print '----------------------------------------------'
+            sys.stdout.write('\x1b[0m')
+            print '* keywords: '
+            for key in result[3]:
+                sys.stdout.write(' ' + key + ' ')
+            print '\n* title: '
+            sys.stdout.write('\x1b[1m')
+            print result[4].strip()
+            sys.stdout.write('\x1b[0m')
+            print '* score: ' , '\x1b[1m' , result[0] , '\x1b[0m'
+        selectionFILE.write(result[2] + '\n')
+    selectionFILE.close()
+
+#files_note = lambda:sys.stdout.write("files_note()")
+
+def files_note():
+    global_data.note_files = global_data.arguments
+
+#note_cd = lambda:sys.stdout.write("note_cd()")
+
+def note_cd():
+    if(len(global_data.arguments) != 1):
+        sys.stdout.write('Only one argument for note cd.')
+        exit(1)
+    selectionFILE = open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection') , 'r+')
+    num = global_data.note_number - int(global_data.arguments[0]) + 1
+    i = 0
+    for line in selectionFILE.readlines():
+        i += 1
+        if(i == num):
+            print 'cd ' + os.path.join(line.strip() , "FILES")
+            os.chdir(os.path.join(line.strip() , "FILES"))
+            os.system('bash')
+    selectionFILE.close()
+
+#note_pdf = lambda:sys.stdout.write("note_pdf()")
+
+def note_pdf():
+    if(len(global_data.arguments) != 1):
+        sys.stdout.write('Only one argument for note pdf.')
+        exit(1)
+    selectionFILE = open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection') , 'r+')
+    num = global_data.note_number - int(global_data.arguments[0]) + 1
+    i = 0
+    for line in selectionFILE.readlines():
+        i += 1
+        if(i == num):
+            name = os.path.basename(os.path.realpath(line.strip()))
+            global_data.note_file_directory = os.path.join(global_data.setup['notepath'][-1] , name)
+            try:
+                os.stat(os.path.join(global_data.note_file_directory , 'setup'))
+                global_data.local_setup = True
+            except os.error as e:
+                global_data.local_setup = False
+            if(global_data.local_setup):
+                local_setup_path = os.path.join(global_data.note_file_directory ,  
+                        'setup')
+                get_setup(local_setup_path) 
+            os.system(global_data.setup['viewer'][-1] + ' ' + os.path.join(line.strip() , name + global_data.setup['res'][-1]))
+            if(global_data.local_setup):
+                global_data.setup = {}
+                get_setup(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'setup'))
+    selectionFILE.close()
+
+#note_pwd = lambda:sys.stdout.write("note_pwd()")
+
+def note_pwd():
+    if(len(global_data.arguments) != 1):
+        sys.stdout.write('Only one argument for note pdf.')
+        exit(1)
+    selectionFILE = open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection') , 'r+')
+    num = global_data.note_number - int(global_data.arguments[0]) + 1
+    i = 0
+    for line in selectionFILE.readlines():
+        i += 1
+        if(i == num):
+            sys.stdout.write(os.path.realpath(os.path.join(line.strip() , "FILES")))
+    selectionFILE.close()
+
+#note_view = lambda:sys.stdout.write("note_view()")
+
+def note_view():
+    if(len(global_data.arguments) != 1):
+        sys.stdout.write('Only one argument for note pdf.')
+        exit(1)
+    selectionFILE = open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection') , 'r+')
+    num = global_data.note_number - int(global_data.arguments[0]) + 1
+    i = 0
+    for line in selectionFILE.readlines():
+        i += 1
+        if(i == num):
+            name = os.path.basename(os.path.realpath(line.strip()))
+            open_note(name)  
+                
+            print '\x1b[1;35m'
+            print '----------------------------------------------'
+            print str(num) + '\t' + name
+            print '----------------------------------------------'
+            print '\x1b[0m'
+ 
+            print '* keywords:'
+            
+            for key in global_data.note_key_words:
+                print key
+         
+            print '* title:'
+            print global_data.note_title.strip()
+            print '* date (D/M/Y)'
+            print global_data.note_date[1] + '/' + global_data.note_date[2] + '/' + global_data.note_date[3]
+            print '* note:'
+
+            print '\x1b[1m'
+            note = open(global_data.note_note_path , 'r')
+
+            for line in note.readlines():
+                sys.stdout.write(line)
+
+            note.close()
+            print '\x1b[0m'
+
+
+    selectionFILE.close()
+
+#note_local = lambda:sys.stdout.write("note_local()")
+
+def note_local():
+    if(len(global_data.arguments) != 0):
+        sys.stdout.write('No arguments for localsetup.')
+        exit(1)
+    global_data.local_setup = not global_data.local_setup
+
+#date_note = lambda:sys.stdout.write("date_note()")
+
+def date_note():
+    if(len(global_data.arguments) != 2):
+        sys.stdout.write('Not enough data to create note, try:\n$note title "some title" keywords "some key" words create\n.')
+        exit(1)
+    selectionFILE = open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection') , 'r+')
+
+    BEFORE = lambda b,a : b
+    AFTER = lambda b,a : a
+    INSIDE = lambda b,a : a and b
+
+    infun = INSIDE
+
+    if(global_data.arguments[0] == '-'):
+        fm = ['0' , '0' , '0']
+        infun = BEFORE
+    else:
+        fm = global_data.arguments[0].strip().split()
+    if(global_data.arguments[1] == '-'):
+        to = ['99','99','99']
+        infun = AFTER
+    else:
+        to = global_data.arguments[1].strip().split()
+    i = 0
+    for line in selectionFILE.readlines():
+        i += 1
+        name = os.path.basename(os.path.realpath(line.strip()))
+        open_note(name)
+
+        before = int(global_data.note_date[3]) < int(to[2])
+        if(int(global_data.note_date[3]) == int(to[2])):
+            before = int(global_data.note_date[2]) < int(to[1])
+            if(int(global_data.note_date[2]) == int(to[1])):
+                before = int(global_data.note_date[1]) <= int(to[0])
+
+        after = int(global_data.note_date[3]) > int(fm[2])
+        if(int(global_data.note_date[3]) == int(fm[2])):
+            after = int(global_data.note_date[2]) > int(fm[1])
+            if(int(global_data.note_date[2]) == int(fm[1])):
+                after = int(global_data.note_date[1]) >= int(fm[0])
+
+        inside = infun(before , after)
+        
+        if(inside):
+            
+            sys.stdout.write('\x1b[1;35m')
+            print '----------------------------------------------'
+            print str(global_data.note_number - i + 1) + '\t' + name
+            print '----------------------------------------------'
+            sys.stdout.write('\x1b[0m')
+            print '* key words:'
+            for word in global_data.note_key_words:
+                sys.stdout.write(' \"' + word + '\" ')
+            print ' '
+            print '* title:'
+            sys.stdout.write('\x1b[1m')
+            print global_data.note_title.strip()
+            sys.stdout.write('\x1b[0m')
+        note = open(global_data.note_note_path , 'r')
+        note.close()
+
+    selectionFILE.close()
+
+#note_help = lambda:sys.stdout.write("note_help()")
+
+def note_help():
+    if(len(global_data.arguments) != 0):
+        sys.stdout.write('No arguments for note help.')
+        exit(1)
+    print 'Syntax:'
+    print '$note operator1 argument11 argument12 argument13 ... operator2 argument21 ... operatorN ...'
+    print 'Best to use latin ASCI letters A-Z, a-z and numbers 0123456789.'
+    print 'Avoid special characters.'
+    print 'Carefull, if argument name is the same as operator name then you can use :argument.'
+    for verb in verbs.keys():
+        print verbs[verb][2]
+    for verb in verbs.keys():
+        print verbs[verb][2]
+
+#short_notes = lambda:sys.stdout.write("short_notes()")
+
+def short_notes():
+    open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection') , 'w').close()
+    selectionFILE = open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection') , 'r+')
+    files = os.listdir(global_data.setup['notepath'][-1])
+    files.sort()
+    i = 0
+    for f in files:
+        open_note(f)
+
+        i += 1
+        if(i > global_data.note_number - int(global_data.setup['max'][-1]) - global_data.max_plus):
+            sys.stdout.write('\x1b[1;35m')
+            print '----------------------------------------------'
+            print str(global_data.note_number - i + 1) + '\t' + f
+            print '----------------------------------------------'
+            sys.stdout.write('\x1b[0m')
+            print '* key words:'
+            for word in global_data.note_key_words:
+                sys.stdout.write(' ' + word + ' ')
+            print ' '
+            print '* title:'
+            sys.stdout.write('\x1b[1m')
+            print global_data.note_title.strip()
+            sys.stdout.write('\x1b[0m')
+        selectionFILE.write(global_data.note_file_directory + '\n')
+
+    selectionFILE.close()
+
+#key_notes = lambda:sys.stdout.write("key_notes()")
+
+def key_notes():
+    open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection') , 'w').close()
+    selectionFILE = open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection') , 'r+')
+    files = os.listdir(global_data.setup['notepath'][-1])
+    files.sort()
+    keywords = set([])
+    for f in files:
+        open_note(f)
+        keywords.update(global_data.note_key_words)
+        selectionFILE.write(global_data.note_file_directory + '\n')
+    keywords = list(keywords)
+    keywords.sort()
+    for word in keywords:
+        sys.stdout.write('\"' + word + '\" ')
+    sys.stdout.write('\n')
+    selectionFILE.close()
+
+#max_notes = lambda:sys.stdout.write("max_notes()")
+
+def max_notes():
+    if(len(global_data.arguments) != 1):
+        sys.stdout.write('No global_data.arguments for max.')
+        exit(1)
+    global_data.max_plus = int(global_data.arguments[0])
+
+#note_move = lambda:sys.stdout.write("note_move()")
+
+def note_move():
+    if(len(global_data.arguments) != 1):
+        sys.stdout.write('Only one argument for note cd.')
+        if(lock != None): rel_lock()
+        exit(1)
+    selectionFILE = open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection') , 'r+')
+    num = global_data.note_number - int(global_data.arguments[0]) + 1
+    i = 0
+    for line in selectionFILE.readlines():
+        i += 1
+        if(i == num):
+            print 'mv ' + line.strip() + ' ' + global_data.setup['trashpath'][-1]
+            os.system('mv ' + line.strip() + ' ' + global_data.setup['trashpath'][-1])
+    selectionFILE.close()
+
+#edit_note = lambda:sys.stdout.write("edit_note()")
+
+def edit_note():
+    if(len(global_data.arguments) != 1):
+        sys.stdout.write('Only one argument for edit note .')
+        if(lock != None): rel_lock()
+        exit(1)
+    selectionFILE = open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection') , 'r+')
+    num = global_data.note_number - int(global_data.arguments[0]) + 1
+    i = 0
+    for line in selectionFILE.readlines():
+        i += 1
+        if(i == num):
+            name = os.path.basename(os.path.realpath(line.strip()))
+            
+            global_data.note_file_directory = os.path.join(global_data.setup['notepath'][-1] , name)
+            try:
+                os.stat(os.path.join(global_data.note_file_directory , 'setup'))
+                global_data.local_setup = True
+            except os.error as e:
+                global_data.local_setup = False
+            if(global_data.local_setup):
+                local_setup_path = os.path.join(global_data.note_file_directory ,  
+                        'setup')
+                get_setup(local_setup_path)  
+            global_data.note_note_path = os.path.join(global_data.note_file_directory , "DATA" , '.' + name + '.note')
+            global_data.note_info_path = os.path.join(global_data.note_file_directory , "DATA" , '.' + name)
+            global_data.note_tex_path = os.path.join(global_data.note_file_directory , "DATA" , name + global_data.setup['ext'][-1])
+     
+            info = open(global_data.note_info_path)
+            lines = info.readlines()
+            if(global_data.note_title == None):
+                global_data.note_title = lines[0]
+            if(global_data.note_key_words == None):
+                global_data.note_key_words = []
+            if(global_data.note_yek_words == None):
+                global_data.note_yek_words = []
+            global_data.note_key_words.extend(lines[1].strip().split('\\'))
+            global_data.note_key_words.pop(-1)
+            for word in global_data.note_yek_words:
+                try:
+                    global_data.note_key_words.remove(word)
+                except:
+                    print word + ' not found in note key words.'
+            global_data.note_date = []
+            global_data.note_date.append(lines[2].strip())
+            global_data.note_date.append(lines[3].strip())
+            global_data.note_date.append(lines[4].strip())
+            global_data.note_date.append(lines[5].strip())
+            global_data.note_date.append(lines[6].strip())
+            
+            info.close()
+            
+            open(global_data.note_note_path , 'w').close()
+            note = open(global_data.note_note_path , 'w')
+            os.system(global_data.setup['editor'][-1] + ' ' + global_data.note_tex_path)
+            insert = False
+            note = open(global_data.note_note_path , 'w')
+            output = open(global_data.note_tex_path , 'r')
+            for line in output.readlines():
+                if((not re.search(r'begin_note' , line) == None) or (not re.search(r'end_note' , line) == None)):
+                    insert = not insert
+                    continue
+                if(insert):
+                    note.write(line)
+            output.close()
+            note.close()
+            open(global_data.note_info_path , 'w').close()
+            info = open(global_data.note_info_path , 'w')
+            info.write(global_data.note_title.strip() + '\n')
+            for word in global_data.note_key_words:
+                info.write(word + '\\')
+            info.write('\n')
+            info.write(global_data.note_date[0] + '\n')
+            info.write(global_data.note_date[1] + '\n')
+            info.write(global_data.note_date[2] + '\n')
+            info.write(global_data.note_date[3] + '\n')
+            info.write(global_data.note_date[4] + '\n')
+            info.close()
+            if(not global_data.note_files == None):
+                for f in global_data.note_files:
+                    os.system('cp -r ' + f + ' ' + global_data.note_file_directory)
+            current = os.getcwd()
+            os.chdir(global_data.note_file_directory)
+            os.system(global_data.setup['convert'][-1] + ' ' + global_data.note_tex_path)
+            os.chdir(current)
+            if(global_data.local_setup):
+                global_data.setup = {}
+                get_setup(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'setup'))
+
+###
+### GLOBAL LOCK
+###
+
+lock = None
+
+#
+# get_lock()
+#
+# Tries to create the ".lock" file 
+# in the same directory as the "note"
+# script. The ".lock" file is 
+# created with flags - it is 
+# created only if it does not exist.
+#
+
+def get_lock():
+    global lock
+    got_lock = False
+    while(not got_lock):
+        try:
+            lock = os.open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.lock'),
+                os.O_RDWR|os.O_CREAT|os.O_EXCL)
+            os.write(lock , 'Lock in process (pid): ' + str(os.getpid()))
+            got_lock = True
+        except:
+            time.sleep(0.1)
+
+#
+# rel_lock()
+# Tries to delete the ".lock" file 
+# in the same directory as the "note"
+# script. 
+#
+
+def rel_lock():
+    global lock
+    if(not lock == None):
+        os.close(lock)
+        lock = None
+        os.remove(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.lock'))
+
+###
+### HANDLING ARGUMENTS
+###
+
+global_data.arguments = []
+
+verbs = {
+        'list' : 
+        [
+            list_notes 
+            , 0 
+            , """
+List all notes in the NOTES directory. 
+Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mlist\x1b[0m ...
+            """
+        ] ,
+        'key' : 
+        [
+            key_words
+            , -1
+            , """
+Add keywords to note. 
+Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mkey\x1b[0m <one or more key words> ...
+            """
+        ] ,
+        'yek' : 
+        [
+            yek_words
+            , -1
+            , """
+Remove keywordsfrom note. 
+Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1myek\x1b[0m <one or more key words> ...
+            """
+        ], 
+        'title' : 
+        [
+            title_note
+            , 1
+            , """
+Add note title. 
+Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mtitle\x1b[0m <single title> ...
+"""] , 
+        'find' : 
+        [
+            find_note
+            , -1
+            , """
+Find note. 
+Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mfind\x1b[0m <one or more key words> ...
+            """
+        ] ,
+        'files' :
+        [
+            files_note
+            , -1
+            , """
+Add files to note. 
+Usage:\n\t\x1b[1m\x1b[1mnote\x1b[0m\x1b[0m ... \x1b[1mfiles\x1b[0m <one or more files to add to note> ...
+            """
+        ] ,
+        'cd' :
+        [
+            note_cd
+            , 1
+            , """
+Change directory to note. 
+Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mcd\x1b[0m <number of note> ...
+            """
+        ] ,
+        'pwd' :
+        [
+            note_pwd
+            , 1
+            , """
+Print note directory to stdout. 
+Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mpwd\x1b[0m <number of note> ...
+            """
+        ] ,
+        'pdf' :
+        [
+            note_pdf
+            , 1
+            , """
+View note. 
+Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mpdf\x1b[0m <number of note> ...
+            """
+        ] ,
+        'view' :
+        [
+            note_view
+            , 1
+            , """
+View note. 
+Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mview\x1b[0m <number of note> ..."""
+        ] ,
+        'localsetup' :
+        [
+            note_local
+            , 0
+            , """
+There will be a local setup file. 
+Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mlocalsetup\x1b[0m ...
+            """
+        ] ,
+        'date' :
+        [
+            date_note
+            , 1
+            , """
+Select date range. 
+Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mdate\x1b[0m "D M Y" "D M Y" ...
+            """
+        ] ,
+        'help' :
+        [
+            note_help
+            , 1
+            , """
+Print help. 
+Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mhelp\x1b[0m ...
+            """
+        ] ,
+        'short' :
+        [
+            short_notes
+            , 1
+            , """
+List all notes in the NOTES directory. 
+Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mshort\x1b[0m ...
+            """
+        ],
+        'keywords' :
+        [
+            key_notes
+            , 1
+            , """
+Print keywords. 
+Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mkewwords\x1b[0m  ...
+            """
+        ],
+        'more' :
+        [
+            max_notes
+            , 1
+            , """
+Additional number of notes to displ. 
+Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mmore\x1b[0m <number> ...
+"""
+        ]
+}
+
+lock_verbs = {
+        'create' : 
+        [
+            create_note
+            , 0 
+            , """
+Create new note, the keywords have to be set. 
+Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mcreate\x1b[0m
+            """
+        ] , 
+        'move' :
+        [
+            note_move
+            , 1
+            , """
+Move note to trash. 
+Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mmove\x1b[0m <number of note> ...
+            """
+        ],
+        'edit' :
+        [
+            edit_note
+            , 1
+            , """
+Edit note. 
+Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1medit\x1b[0m <number of note> ...
+            """
+        ]
+}
+
+current_verb = None
+    
+#
+# note_act()
+#
+# Handles the command line global_data.arguments.
+#  
+
+def note_act():
+    global verbs , current_verb
+    for arg in sys.argv[1:]:
+        if(
+                (
+                    (arg[1:] in verbs.keys()) or
+                    (arg[1:] in lock_verbs.keys())
+                ) and 
+                arg[0] == '-'):
+            try:
+                if(current_verb in lock_verbs and current_verb != None): 
+                    get_lock()
+                    lock_verbs[current_verb][0]()
+                    global_data.arguments = []
+                    rel_lock()
+                elif(current_verb in verbs and current_verb != None):
+                    verbs[current_verb][0]()
+                    global_data.arguments = []
+            except Exception as e:
+                print e.__doc__
+                print e.message
+                logging.error(traceback.format_exc())
+                sys.stdout.write('Something wrong with command.\n')
+                exit(1)              
+            current_verb = arg[1:]
+        elif(not arg[0] == '-'):
+           global_data.arguments.append(arg.replace("\n","")) 
+           #print global_data.arguments
+        else:
+            sys.stdout.write('Invalid syntax in note.\n')
+            exit(1)
+    try:
+        if(current_verb in lock_verbs and current_verb != None): 
+            get_lock()
+            lock_verbs[current_verb][0]()
+            global_data.arguments = []
+            rel_lock()
+        elif(current_verb in verbs and current_verb != None):
+            verbs[current_verb][0]()
+            global_data.arguments = []
+    except Exception as e:
+        print e.__doc__
+        print e.message
+        logging.error(traceback.format_exc())
+        sys.stdout.write('Something wrong with command.\n')
+        exit(1)              
+    current_verb = arg[1:]
+       
+
+
+###
+### HELPFULL 
+###
+
+def open_note(f):
+    global_data.note_file_directory = os.path.join(global_data.setup['notepath'][-1] , f)
+    try:
+        os.stat(os.path.join(global_data.note_file_directory , 'setup'))
+        global_data.local_setup = True
+    except os.error as e:
+        global_data.local_setup = False
+    if(global_data.local_setup):
+        local_setup_path = os.path.join(global_data.note_file_directory ,  
+                'setup')
+        get_setup(local_setup_path)  
+    global_data.note_note_path = os.path.join(global_data.note_file_directory , "DATA" , '.' + f + '.note')
+    global_data.note_info_path = os.path.join(global_data.note_file_directory , "DATA" , '.' + f)
+    global_data.note_tex_path = os.path.join(global_data.note_file_directory , "DATA" , f + global_data.setup['ext'][-1])
+
+    info = open(global_data.note_info_path)
+    lines = info.readlines()
+    global_data.note_title = lines[0]
+    global_data.note_key_words = lines[1].strip().split('\\')
+    global_data.note_key_words.pop(-1)
+    global_data.note_date = []
+    global_data.note_date.append(lines[2].strip())
+    global_data.note_date.append(lines[3].strip())
+    global_data.note_date.append(lines[4].strip())
+    global_data.note_date.append(lines[5].strip())
+    global_data.note_date.append(lines[6].strip())
+    info.close()
+    if(global_data.local_setup):
+        global_data.setup = {}
+        get_setup(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'setup'))
+
+def get_setup(file_path):
+    setupFILE = open(file_path , 'r')
+    for line in setupFILE.readlines():
+        if((not line.strip() == '') and (not line.strip()[0] == '#')):
+            words = re.split('=' , line)
+            if(len(words) != 2):
+                sys.stdout.write('Syntax wrong in setup file, schould be key=value.')
+                exit(1)
+            key = words[0].strip()
+            value = words[1].strip()
+            if key in global_data.setup.keys():
+                val = global_data.setup[key]
+                val.append(value)
+                global_data.setup.update({key : val})
+            else:
+                global_data.setup.update({key : [value]})
+    setupFILE.close()
+    if(not 'notepath' in global_data.setup.keys()):
+        global_data.setup.update({'notepath' : [os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'NOTES')]})
+    if(not 'trashpath' in global_data.setup.keys()):
+        global_data.setup.update({'trashpath' : [os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'TRASH')]})
+    if(not 'textemplate' in global_data.setup.keys()):
+        global_data.setup.update({'textemplate' : [os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'TEMPLATE' , 'template.tex')]})
+    global_data.note_number = len(os.listdir(global_data.setup['notepath'][-1]))    
+    if(not 'max' in global_data.setup.keys()):
+        global_data.setup.update({'max' : [global_data.note_number + 999]})
+    if(not 'ext' in global_data.setup.keys()):
+        global_data.setup.update({'ext' : ['.tex']})
+
+###
+### MAIN PART
+###
+
+if(__name__ == '__main__'):
+    try:
+        get_lock()
+
+        all_ok = True
+        try:
+            os.stat(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'NOTES'))
+        except os.error as e:
+            all_ok = False
+            print "No NOTES directory found in:"
+            print os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'NOTES')
+            create = (raw_input("Create this directory? [y/n] ") == "y")
+            if(create):
+                os.mkdir(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'NOTES'))
+            else:
+                exit(0)
+                
+        try:
+            os.stat(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'TRASH'))
+        except os.error as e:
+            all_ok = False
+            print "No TRASH directory found in:"
+            print os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'TRASH')
+            create = (raw_input("Create this directory? [y/n] ") == "y")
+            if(create):
+                os.mkdir(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'TRASH'))
+            else:
+                exit(0)
+
+        try:
+            os.stat(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'TEMPLATE'))
+        except os.error as e:
+            all_ok = False
+            print "No TEMPLATE directory found in:" 
+            print os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'TEMPLATE')
+            create = (raw_input("Create this directory? [y/n] ") == "y")
+            if(create):
+                os.mkdir(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'TEMPLATE'))
+                f = open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'TEMPLATE' , 'template.tex') , 'w')
+                f.write(global_data.TEMPLATE)
+                f.close()
+            else:
+                exit(0)
+
+        try:
+            os.stat(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'setup'))
+        except os.error as e:
+            all_ok = False
+            print "No setup file found in:"
+            print os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'setup')
+            create = (raw_input("Create setup file? [y/n] ") == "y")
+            print """
+Creating setup file...
+
+This file can (and probably schould) be edited
+to change the default settings since
+the default values might not be available
+on this system.
+
+The setup file is short, relax.
+"""
+            f = open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'setup') , 'w')
+            f.write(global_data.SETUP)
+            f.close()
+
+        try:
+            os.stat(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection'))
+        except os.error as e:
+            open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection') , 'w').close()
+
+        rel_lock()
+        
+        if(all_ok): 
+            get_setup(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'setup'))
+            note_act()
+    except Exception as e:
+        print e.__doc__
+        print e.message
+        logging.error(traceback.format_exc())
+        if(not lock == None):
+            print 'Cleaning up, exiting.'
+            os.remove(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.lock'))
+    
