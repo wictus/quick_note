@@ -274,6 +274,7 @@ def yek_words():
 def title_note():
     if(len(global_data.arguments) != 1):
         sys.stdout.write('A note can have only one title.')
+        if(lock != None): rel_lock()
         exit(1)
     global_data.note_title = global_data.arguments[0]
 
@@ -333,6 +334,7 @@ def files_note():
 def note_cd():
     if(len(global_data.arguments) != 1):
         sys.stdout.write('Only one argument for note cd.')
+        if(lock != None): rel_lock()
         exit(1)
     selectionFILE = open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection') , 'r+')
     num = global_data.note_number - int(global_data.arguments[0]) + 1
@@ -350,6 +352,7 @@ def note_cd():
 def note_pdf():
     if(len(global_data.arguments) != 1):
         sys.stdout.write('Only one argument for note pdf.')
+        if(lock != None): rel_lock()
         exit(1)
     selectionFILE = open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection') , 'r+')
     num = global_data.note_number - int(global_data.arguments[0]) + 1
@@ -379,6 +382,7 @@ def note_pdf():
 def note_pwd():
     if(len(global_data.arguments) != 1):
         sys.stdout.write('Only one argument for note pdf.')
+        if(lock != None): rel_lock()
         exit(1)
     selectionFILE = open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection') , 'r+')
     num = global_data.note_number - int(global_data.arguments[0]) + 1
@@ -394,6 +398,7 @@ def note_pwd():
 def note_view():
     if(len(global_data.arguments) != 1):
         sys.stdout.write('Only one argument for note pdf.')
+        if(lock != None): rel_lock()
         exit(1)
     selectionFILE = open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection') , 'r+')
     num = global_data.note_number - int(global_data.arguments[0]) + 1
@@ -438,6 +443,7 @@ def note_view():
 def note_local():
     if(len(global_data.arguments) != 0):
         sys.stdout.write('No arguments for localsetup.')
+        if(lock != None): rel_lock()
         exit(1)
     global_data.local_setup = not global_data.local_setup
 
@@ -446,6 +452,7 @@ def note_local():
 def date_note():
     if(len(global_data.arguments) != 2):
         sys.stdout.write('Not enough data to create note, try:\n$note title "some title" keywords "some key" words create\n.')
+        if(lock != None): rel_lock()
         exit(1)
     selectionFILE = open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection') , 'r+')
 
@@ -510,6 +517,7 @@ def date_note():
 def note_help():
     if(len(global_data.arguments) != 0):
         sys.stdout.write('No arguments for note help.')
+        if(lock != None): rel_lock()
         exit(1)
     print 'Syntax:'
     print '$note operator1 argument11 argument12 argument13 ... operator2 argument21 ... operatorN ...'
@@ -575,6 +583,7 @@ def key_notes():
 def max_notes():
     if(len(global_data.arguments) != 1):
         sys.stdout.write('No global_data.arguments for max.')
+        if(lock != None): rel_lock()
         exit(1)
     global_data.max_plus = int(global_data.arguments[0])
 
@@ -939,6 +948,7 @@ def note_act():
                 print e.message
                 logging.error(traceback.format_exc())
                 sys.stdout.write('Something wrong with command.\n')
+                if(lock != None): rel_lock()
                 exit(1)              
             current_verb = arg[1:]
         elif(not arg[0] == '-'):
@@ -946,6 +956,7 @@ def note_act():
            #print global_data.arguments
         else:
             sys.stdout.write('Invalid syntax in note.\n')
+            if(lock != None): rel_lock()
             exit(1)
     try:
         if(current_verb in lock_verbs and current_verb != None): 
@@ -961,6 +972,7 @@ def note_act():
         print e.message
         logging.error(traceback.format_exc())
         sys.stdout.write('Something wrong with command.\n')
+        if(lock != None): rel_lock()
         exit(1)              
     current_verb = arg[1:]
        
@@ -1008,6 +1020,7 @@ def get_setup(file_path):
             words = re.split('=' , line)
             if(len(words) != 2):
                 sys.stdout.write('Syntax wrong in setup file, schould be key=value.')
+                if(lock != None): rel_lock()
                 exit(1)
             key = words[0].strip()
             value = words[1].strip()
@@ -1049,6 +1062,7 @@ if(__name__ == '__main__'):
             if(create):
                 os.mkdir(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'NOTES'))
             else:
+                if(lock != None): rel_lock()
                 exit(0)
                 
         try:
@@ -1061,6 +1075,7 @@ if(__name__ == '__main__'):
             if(create):
                 os.mkdir(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'TRASH'))
             else:
+                if(lock != None): rel_lock()
                 exit(0)
 
         try:
@@ -1076,6 +1091,7 @@ if(__name__ == '__main__'):
                 f.write(global_data.TEMPLATE)
                 f.close()
             else:
+                if(lock != None): rel_lock()
                 exit(0)
 
         try:
