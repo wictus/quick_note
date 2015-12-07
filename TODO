@@ -1,5 +1,7 @@
 COMMENT RESOLVED POINTS
 
+07 12 2015
+
 Add note_name and note_uuid4 reading and writting 
 from note data file. After -edit the .1231231...
 file does not have the uuid4 and computername.
