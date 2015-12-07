@@ -152,7 +152,7 @@ def create_note():
     for word in global_data.note_yek_words:
         try:
             global_data.note_key_words.remove(word)
-        except:
+        except AttributeError as e:
             print word + ' not found in note key words.'
     for line in template.readlines():
         if(not re.search(r'begin_note' , line) == None):
@@ -646,7 +646,7 @@ def edit_note():
             for word in global_data.note_yek_words:
                 try:
                     global_data.note_key_words.remove(word)
-                except:
+                except AttributeError as e:
                     print word + ' not found in note key words.'
             global_data.note_date = []
             global_data.note_date.append(lines[2].strip())
@@ -926,7 +926,7 @@ current_verb = None
 #  
 
 def note_act():
-    global verbs , current_verb
+    global verbs, lock_verbs , current_verb
     for arg in sys.argv[1:]:
         if(
                 (
@@ -1131,5 +1131,5 @@ The setup file is short, relax.
         logging.error(traceback.format_exc())
         if(not lock == None):
             print 'Cleaning up, exiting.'
-            os.remove(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.lock'))
+            rel_lock()
     
