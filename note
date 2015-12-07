@@ -88,6 +88,7 @@ viewer = xpdf -rv
     note_date = None
     note_files = None
     note_uuid4 = None
+    note_name = None
 
     note_number = None
 
@@ -116,6 +117,7 @@ def create_note():
                 datetime.date.today().strftime("%y") ,
                 datetime.date.today().strftime("%d_%m_%y")] 
         global_data.note_uuid4 = str(uuid.uuid4())
+        global_data.note_name = global_data.setup["notename"][-1]
         global_data.note_file_directory = os.path.join(global_data.setup['notepath'][-1] , "".join([str(ticks),"_",global_data.note_uuid4]))
         attempt += 1
         try:
@@ -654,7 +656,7 @@ def edit_note():
             global_data.note_date.append(lines[4].strip())
             global_data.note_date.append(lines[5].strip())
             global_data.note_date.append(lines[6].strip())
-            
+
             info.close()
             
             open(global_data.note_note_path , 'w').close()
