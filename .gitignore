@@ -4,3 +4,5 @@ TEMPLATE
 setup
 .selection
 .lock
+TEST/TEST_NOTE
+TEST/testresults
