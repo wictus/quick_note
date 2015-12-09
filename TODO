@@ -4,6 +4,8 @@ COMMENT RESOLVED POINTS WITH #
 
 CHECK note_name and note_uuid4
 
+ADD tests
+
 07 12 2015
 
 #Add note_name and note_uuid4 reading and writting 
