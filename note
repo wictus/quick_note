@@ -187,7 +187,7 @@ def create_note():
     info.write(global_data.note_date[3] + '\n')
     info.write(global_data.note_date[4] + '\n')
     info.write(global_data.note_uuid4 + '\n')
-    info.write(global_data.setup["notename"][-1] + '\n')
+    info.write(global_data.note_name + '\n')
     info.close()
     if(not global_data.note_files == None):
         for f in global_data.note_files:
@@ -656,6 +656,8 @@ def edit_note():
             global_data.note_date.append(lines[4].strip())
             global_data.note_date.append(lines[5].strip())
             global_data.note_date.append(lines[6].strip())
+            global_data.note_uuid4 = lines[7].strip()
+            global_data.note_name = lines[8].strip()
 
             info.close()
             
@@ -684,6 +686,9 @@ def edit_note():
             info.write(global_data.note_date[2] + '\n')
             info.write(global_data.note_date[3] + '\n')
             info.write(global_data.note_date[4] + '\n')
+            info.write(global_data.note_uuid4 + '\n')
+            info.write(global_data.note_name + '\n')
+
             info.close()
             if(not global_data.note_files == None):
                 for f in global_data.note_files:
@@ -1010,6 +1015,9 @@ def open_note(f):
     global_data.note_date.append(lines[4].strip())
     global_data.note_date.append(lines[5].strip())
     global_data.note_date.append(lines[6].strip())
+    global_data.note_uuid4 = lines[7].strip()
+    global_data.note_name = lines[8].strip()
+
     info.close()
     if(global_data.local_setup):
         global_data.setup = {}
