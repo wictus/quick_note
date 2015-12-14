@@ -335,7 +335,6 @@ def find_note():
                 score = 0
 
         if global_data.date_to != None and global_data.date_from != None:
-            print global_data.note_date[0] , global_data.date_from , global_data.date_to
             if int(global_data.note_date[0]) > global_data.date_to:
                 score = 0
 
