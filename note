@@ -102,6 +102,9 @@ viewer = xpdf -rv
 
     search_functions = []
 
+    date_from = None
+    date_to = None
+
     note_number = None
 
     max_plus = 0
@@ -323,14 +326,22 @@ def find_note():
         for function in reversed(global_data.search_functions):
             function[0](global_data.note_key_words , stack , function[1])
 
-        if(len(stack) !=1):
+        if(len(stack) != 1 and len(global_data.search_functions) != 0):
             sys.stdout.write('Search stack expected to have 1 element.')
             if(lock != None): rel_lock()
             exit(1)
+        elif(len(global_data.search_functions) != 0):
+            if(stack[0] == False):
+                score = 0
 
-        if stack[0] == False:
-            score = 0
-        
+        if global_data.date_to != None and global_data.date_from != None:
+            print global_data.note_date[0] , global_data.date_from , global_data.date_to
+            if int(global_data.note_date[0]) > global_data.date_to:
+                score = 0
+
+            if int(global_data.note_date[0]) < global_data.date_from:
+                score = 0
+
         scores.append([score , f , global_data.note_file_directory , global_data.note_key_words , global_data.note_title])
 
     scores = sorted(scores , key=lambda x:x[0])
@@ -484,63 +495,70 @@ def date_note():
         sys.stdout.write('Not enough data to create note, try:\n$note title "some title" keywords "some key" words create\n.')
         if(lock != None): rel_lock()
         exit(1)
-    selectionFILE = open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection') , 'r+')
-
-    BEFORE = lambda b,a : b
-    AFTER = lambda b,a : a
-    INSIDE = lambda b,a : a and b
-
-    infun = INSIDE
-
-    if(global_data.arguments[0] == '-'):
-        fm = ['0' , '0' , '0']
-        infun = BEFORE
-    else:
-        fm = global_data.arguments[0].strip().split()
-    if(global_data.arguments[1] == '-'):
-        to = ['99','99','99']
-        infun = AFTER
-    else:
-        to = global_data.arguments[1].strip().split()
-    i = 0
-    for line in selectionFILE.readlines():
-        i += 1
-        name = os.path.basename(os.path.realpath(line.strip()))
-        open_note(name)
-
-        before = int(global_data.note_date[3]) < int(to[2])
-        if(int(global_data.note_date[3]) == int(to[2])):
-            before = int(global_data.note_date[2]) < int(to[1])
-            if(int(global_data.note_date[2]) == int(to[1])):
-                before = int(global_data.note_date[1]) <= int(to[0])
-
-        after = int(global_data.note_date[3]) > int(fm[2])
-        if(int(global_data.note_date[3]) == int(fm[2])):
-            after = int(global_data.note_date[2]) > int(fm[1])
-            if(int(global_data.note_date[2]) == int(fm[1])):
-                after = int(global_data.note_date[1]) >= int(fm[0])
-
-        inside = infun(before , after)
-        
-        if(inside):
-            
-            sys.stdout.write('\x1b[1;35m')
-            print '----------------------------------------------'
-            print str(global_data.note_number - i + 1) + '\t' + name
-            print '----------------------------------------------'
-            sys.stdout.write('\x1b[0m')
-            print '* key words:'
-            for word in global_data.note_key_words:
-                sys.stdout.write(' \"' + word + '\" ')
-            print ' '
-            print '* title:'
-            sys.stdout.write('\x1b[1m')
-            print global_data.note_title.strip()
-            sys.stdout.write('\x1b[0m')
-        note = open(global_data.note_note_path , 'r')
-        note.close()
-
-    selectionFILE.close()
+    pattern = '%d.%m.%Y'
+    epoch = int(time.mktime(time.strptime(global_data.arguments[0], pattern)))
+    print epoch
+    global_data.date_from = epoch * 1000
+    epoch = int(time.mktime(time.strptime(global_data.arguments[1], pattern)))
+    print epoch
+    global_data.date_to = epoch * 1000
+#    selectionFILE = open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection') , 'r+')
+#
+#    BEFORE = lambda b,a : b
+#    AFTER = lambda b,a : a
+#    INSIDE = lambda b,a : a and b
+#
+#    infun = INSIDE
+#
+#    if(global_data.arguments[0] == '-'):
+#        fm = ['0' , '0' , '0']
+#        infun = BEFORE
+#    else:
+#        fm = global_data.arguments[0].strip().split()
+#    if(global_data.arguments[1] == '-'):
+#        to = ['99','99','99']
+#        infun = AFTER
+#    else:
+#        to = global_data.arguments[1].strip().split()
+#    i = 0
+#    for line in selectionFILE.readlines():
+#        i += 1
+#        name = os.path.basename(os.path.realpath(line.strip()))
+#        open_note(name)
+#
+#        before = int(global_data.note_date[3]) < int(to[2])
+#        if(int(global_data.note_date[3]) == int(to[2])):
+#            before = int(global_data.note_date[2]) < int(to[1])
+#            if(int(global_data.note_date[2]) == int(to[1])):
+#                before = int(global_data.note_date[1]) <= int(to[0])
+#
+#        after = int(global_data.note_date[3]) > int(fm[2])
+#        if(int(global_data.note_date[3]) == int(fm[2])):
+#            after = int(global_data.note_date[2]) > int(fm[1])
+#            if(int(global_data.note_date[2]) == int(fm[1])):
+#                after = int(global_data.note_date[1]) >= int(fm[0])
+#
+#        inside = infun(before , after)
+#        
+#        if(inside):
+#            
+#            sys.stdout.write('\x1b[1;35m')
+#            print '----------------------------------------------'
+#            print str(global_data.note_number - i + 1) + '\t' + name
+#            print '----------------------------------------------'
+#            sys.stdout.write('\x1b[0m')
+#            print '* key words:'
+#            for word in global_data.note_key_words:
+#                sys.stdout.write(' \"' + word + '\" ')
+#            print ' '
+#            print '* title:'
+#            sys.stdout.write('\x1b[1m')
+#            print global_data.note_title.strip()
+#            sys.stdout.write('\x1b[0m')
+#        note = open(global_data.note_note_path , 'r')
+#        note.close()
+#
+#    selectionFILE.close()
 
 #note_help = lambda:sys.stdout.write("note_help()")
 
