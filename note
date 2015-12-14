@@ -65,6 +65,14 @@ res = .pdf
 # Command to view:
 viewer = xpdf -rv
 
+# Command to execute when editing note data:
+# lock = <some command, for example stop synchronization of NOTES directory>
+
+# Command to execute when finished note data:
+# unlock = <some command, for example start synchronization of NOTES directory>
+
+
+
 """
 
     TEMPLATE = """\documentclass{article}
@@ -725,6 +733,8 @@ def get_lock():
             lock = os.open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.lock'),
                 os.O_RDWR|os.O_CREAT|os.O_EXCL)
             os.write(lock , 'Lock in process (pid): ' + str(os.getpid()))
+            if(lock in global_data.setup.keys()):
+                os.system(global_data.setup['lock'][-1])
             got_lock = True
         except:
             time.sleep(0.1)
@@ -742,6 +752,9 @@ def rel_lock():
         os.close(lock)
         lock = None
         os.remove(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.lock'))
+        if(lock in global_data.setup.keys()):
+            os.system(global_data.setup['unlock'][-1])
+
 
 ###
 ### HANDLING ARGUMENTS
