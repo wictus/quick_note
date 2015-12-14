@@ -8,6 +8,8 @@ import datetime
 import unicodedata
 import uuid
 
+import copy
+
 import traceback
 import logging
 
@@ -97,6 +99,8 @@ viewer = xpdf -rv
     note_files = None
     note_uuid4 = None
     note_name = None
+
+    search_functions = []
 
     note_number = None
 
@@ -297,7 +301,7 @@ def find_note():
     for keyword in global_data.arguments:
         words = keyword.strip()
         #for word in words:
-        note_key.append(words.upper())
+        note_key.append(unicodedata.normalize('NFKD', words.decode("utf-8")).encode('ascii','ignore').upper())
     scores = []
     files = os.listdir(global_data.setup['notepath'][-1])
     files.sort()
@@ -310,6 +314,22 @@ def find_note():
             for key in global_data.note_key_words:
                 score += len(re.findall(keyword , key))
                 score += len(re.findall(key , keyword))
+
+        if(len(note_key) == 0):
+            score = 1
+
+        stack = []
+
+        for function in reversed(global_data.search_functions):
+            function[0](global_data.note_key_words , stack , function[1])
+
+        if(len(stack) !=1):
+            sys.stdout.write('Search stack expected to have 1 element.')
+            if(lock != None): rel_lock()
+            exit(1)
+
+        if stack[0] == False:
+            score = 0
         
         scores.append([score , f , global_data.note_file_directory , global_data.note_key_words , global_data.note_title])
 
@@ -709,6 +729,12 @@ def edit_note():
                 global_data.setup = {}
                 get_setup(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'setup'))
 
+def note_and():
+    global_data.search_functions.append([and_funct , global_data.arguments])
+
+def note_or():
+    global_data.search_functions.append([or_funct , global_data.arguments])
+
 ###
 ### GLOBAL LOCK
 ###
@@ -733,7 +759,7 @@ def get_lock():
             lock = os.open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.lock'),
                 os.O_RDWR|os.O_CREAT|os.O_EXCL)
             os.write(lock , 'Lock in process (pid): ' + str(os.getpid()))
-            if(lock in global_data.setup.keys()):
+            if("lock" in global_data.setup.keys()):
                 os.system(global_data.setup['lock'][-1])
             got_lock = True
         except:
@@ -752,7 +778,7 @@ def rel_lock():
         os.close(lock)
         lock = None
         os.remove(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.lock'))
-        if(lock in global_data.setup.keys()):
+        if("unlock" in global_data.setup.keys()):
             os.system(global_data.setup['unlock'][-1])
 
 
@@ -904,6 +930,25 @@ Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mkewwords\x1b[0m  ...
 Additional number of notes to displ. 
 Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mmore\x1b[0m <number> ...
 """
+        ],
+        'and' :
+        [
+            note_and
+            , -1
+            , """
+Search for notes that contain all the keywords. 
+Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1m-and\x1b[0m <number> ...
+"""
+        ]
+,
+        'or' :
+        [
+            note_or
+            , -1
+            , """
+Search for notes that contain any of the keywords. 
+Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1m-or\x1b[0m <number> ...
+"""
         ]
 }
 
@@ -1001,6 +1046,40 @@ def note_act():
 ###
 ### HELPFULL 
 ###
+
+def and_funct(kes , stack , arg):
+    result = True
+    if(len(arg) != 0):
+        for key in arg:
+            if((not key in kes)):
+                result = False
+        stack.append(result)
+    elif(len(stack) == 2):
+        a = stack.pop()
+        b = stack.pop()
+        result = a and b
+        stack.append(result)
+    else:
+        sys.stdout.write('The -and expects 2 arguments in the stack.\n');
+        if(lock != None): rel_lock()
+        exit(1)
+
+def or_funct(kes , stack , arg):
+    result = False
+    if(len(arg) != 0):
+        for key in arg:
+            if((key in kes)):
+                result = True
+        stack.append(result)
+    elif(len(stack) == 2):
+        a = stack.pop()
+        b = stack.pop()
+        result = a or b
+        stack.append(result)
+    else:
+        sys.stdout.write('The -and expects 2 arguments in the stack.\n');
+        if(lock != None): rel_lock()
+        exit(1)
 
 def open_note(f):
     global_data.note_file_directory = os.path.join(global_data.setup['notepath'][-1] , f)
