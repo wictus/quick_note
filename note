@@ -561,10 +561,9 @@ def note_help():
         if(lock != None): rel_lock()
         exit(1)
     print 'Syntax:'
-    print '$note operator1 argument11 argument12 argument13 ... operator2 argument21 ... operatorN ...'
+    print '$note -operator1 argument11 argument12 argument13 ... -operator argument21 argument22 ... ...'
     print 'Best to use latin ASCI letters A-Z, a-z and numbers 0123456789.'
     print 'Avoid special characters.'
-    print 'Carefull, if argument name is the same as operator name then you can use :argument.'
     for verb in verbs.keys():
         print verbs[verb][2]
     for verb in verbs.keys():
@@ -814,8 +813,14 @@ verbs = {
             list_notes 
             , 0 
             , """
-List all notes in the NOTES directory. 
-Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mlist\x1b[0m ...
+* List notes in the NOTES directory. 
+The maximum number of notes displayed is set in "max"
+in the "setup".
+Usage:
+\t\x1b[1mnote\x1b[0m ... \x1b[1m-list\x1b[0m ...
+Example:
+\tnote -list
+will list the notes.
             """
         ] ,
         'key' : 
@@ -823,8 +828,13 @@ Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mlist\x1b[0m ...
             key_words
             , -1
             , """
-Add keywords to note. 
-Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mkey\x1b[0m <one or more key words> ...
+* Add keywords to note. 
+This is used togather with "create".
+Usage:
+\t\x1b[1mnote\x1b[0m ... \x1b[1m-key\x1b[0m <one or more key words> ... -create
+Example:
+\tnote -key key1 somekey2 -title "some title" -create
+will create a note with the keywords "key1" and "somekey2".
             """
         ] ,
         'yek' : 
@@ -832,8 +842,18 @@ Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mkey\x1b[0m <one or more key words> ...
             yek_words
             , -1
             , """
-Remove keywordsfrom note. 
-Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1myek\x1b[0m <one or more key words> ...
+* Remove keywords from note.
+This is used togather with "create".
+Usage:
+\t\x1b[1mnote\x1b[0m ... \x1b[1m-yek\x1b[0m <one or more key words> ... -create
+Example:
+\tnote -key goodkey badkey -title "Some note" -create
+will first create a note with the keywords 
+"goodkey" and "badkey"
+\tnote -yek badkey -edit <number of the note created earlier>
+assuming that the correct note number is used, will
+remove the "badkey"
+
             """
         ], 
         'title' : 
@@ -841,16 +861,26 @@ Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1myek\x1b[0m <one or more key words> ...
             title_note
             , 1
             , """
-Add note title. 
-Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mtitle\x1b[0m <single title> ...
+* Add note title. 
+This is used with "create".
+Usage:
+\t\x1b[1mnote\x1b[0m ... \x1b[1mtitle\x1b[0m <single title> ...
+Example:
+\tnote -key key1 some -title "some title" -create
+creates note with title "some title" and keywords 
+"key1" and "some".
 """] , 
         'find' : 
         [
             find_note
             , -1
             , """
-Find note. 
-Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mfind\x1b[0m <one or more key words> ...
+* Find note. 
+Usage:
+\t\x1b[1mnote\x1b[0m ... \x1b[1m-find\x1b[0m <one or more key words> ...
+Example:
+\tnote -find some note
+will look for keywords "some", "note" in NOTES.
             """
         ] ,
         'files' :
