@@ -18,15 +18,6 @@ import logging
 ###
 
 class global_data(object):
-    LOCAL_SETUP = """# Uncomment and modify if necessary:
-# template=/path/to/the/template
-# editor=vim 
-# ext=.tex
-# convert=pdflatex 
-# res=.pdf
-# viewer=xpdf -rv
-
-"""
     local_setup = False
     setup = {}
 
@@ -116,8 +107,6 @@ viewer = xpdf -rv
 #create_note = lambda:sys.stdout.write("create_note()")
 
 def create_note():
-    if(global_data.note_title == None):
-        global_data.note_title = ' '
     if(global_data.note_title == None or global_data.note_key_words == None):
         sys.stdout.write('Not enough data to create note, try:\n$note title "some title" keywords "some key" words create\n.')
         if(lock != None): rel_lock()
@@ -148,17 +137,22 @@ def create_note():
         sys.stdout.write('Could not create note directory after ' + str(attempt) + ' attempts.')
         if(lock != None): rel_lock()
         exit(1)
+    
+    local_setup_path = os.path.join(global_data.note_file_directory , "DATA" ,  
+            'setup')
+    local = open(local_setup_path , 'w')
+    for key in global_data.setup:
+        local.write("".join([key , '=' , global_data.setup[key][-1] , '\n']))
+    local.close()
+
     if(global_data.local_setup):
-        local_setup_path = os.path.join(global_data.note_file_directory ,  
-                'setup')
-        local = open(local_setup_path , 'w')
-        print local_setup_path
-        local.write(global_data.LOCAL_SETUP)
-        local.close()
         os.system(global_data.setup['editor'][-1] + ' ' + local_setup_path)
-        get_setup(local_setup_path)  
-    global_data.note_info_path = os.path.join(global_data.note_file_directory , "DATA" , '.' + "".join([global_data.note_date[0],"_",global_data.note_uuid4]))
-    global_data.note_note_path = os.path.join(global_data.note_file_directory , "DATA" , '.' + "".join([global_data.note_date[0],"_",global_data.note_uuid4]) + 
+
+    get_setup(global_data.setup , local_setup_path) 
+    complement_setup()
+
+    global_data.note_info_path = os.path.join(global_data.note_file_directory , "DATA" , "".join([global_data.note_date[0],"_",global_data.note_uuid4]))
+    global_data.note_note_path = os.path.join(global_data.note_file_directory , "DATA" , "".join([global_data.note_date[0],"_",global_data.note_uuid4]) + 
             ".note")
     global_data.note_tex_path = os.path.join(global_data.note_file_directory , "DATA" , "".join([global_data.note_date[0],"_",global_data.note_uuid4]) + 
             global_data.setup['ext'][-1])
@@ -192,17 +186,16 @@ def create_note():
     output.close()
     note.close()
     info = open(global_data.note_info_path , 'w')
-    info.write(global_data.note_title + '\n')
+    info.write("this_title=" + global_data.note_title + '\n')
     for word in global_data.note_key_words:
-        info.write(word + '\\')
-    info.write('\n')
-    info.write(global_data.note_date[0] + '\n')
-    info.write(global_data.note_date[1] + '\n')
-    info.write(global_data.note_date[2] + '\n')
-    info.write(global_data.note_date[3] + '\n')
-    info.write(global_data.note_date[4] + '\n')
-    info.write(global_data.note_uuid4 + '\n')
-    info.write(global_data.note_name + '\n')
+        info.write("this_key=" + word + '\n')
+    info.write("this_date=" + global_data.note_date[0] + '\n')
+    info.write("this_date=" + global_data.note_date[1] + '\n')
+    info.write("this_date=" + global_data.note_date[2] + '\n')
+    info.write("this_date=" + global_data.note_date[3] + '\n')
+    info.write("this_date=" + global_data.note_date[4] + '\n')
+    info.write("this_uuid4=" + global_data.note_uuid4 + '\n')
+    info.write("this_name=" + global_data.note_name + '\n')
     info.close()
     if(not global_data.note_files == None):
         for f in global_data.note_files:
@@ -213,9 +206,11 @@ def create_note():
     #print global_data.setup['convert'][-1] + ' ' + global_data.note_tex_path
     os.system(global_data.setup['convert'][-1] + ' ' + global_data.note_tex_path)
     os.chdir(current)
-    if(global_data.local_setup):
-        global_data.setup = {}
-        get_setup(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'setup'))
+    
+    global_data.setup = {}
+    get_setup(global_data.setup , os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'setup'))
+    complement_setup()
+    
     open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection') , 'w').close()
     selectionFILE = open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection') , 'r+')
     files = os.listdir(global_data.setup['notepath'][-1])
@@ -403,18 +398,19 @@ def note_pdf():
             name = os.path.basename(os.path.realpath(line.strip()))
             global_data.note_file_directory = os.path.join(global_data.setup['notepath'][-1] , name)
             try:
-                os.stat(os.path.join(global_data.note_file_directory , 'setup'))
-                global_data.local_setup = True
+                os.stat(os.path.join(global_data.note_file_directory , "DATA" , 'setup'))
             except os.error as e:
-                global_data.local_setup = False
-            if(global_data.local_setup):
-                local_setup_path = os.path.join(global_data.note_file_directory ,  
-                        'setup')
-                get_setup(local_setup_path) 
+                sys.stdout.write('No setup in note.')
+                if(lock != None): rel_lock()
+                exit(1)
+            local_setup_path = os.path.join(global_data.note_file_directory , "DATA" ,  
+                    'setup')
+            get_setup(global_data.setup , local_setup_path) 
+            complement_setup()
             os.system(global_data.setup['viewer'][-1] + ' ' + os.path.join(line.strip() , name + global_data.setup['res'][-1]))
-            if(global_data.local_setup):
-                global_data.setup = {}
-                get_setup(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'setup'))
+            global_data.setup = {}
+            get_setup(global_data.setup , os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'setup'))
+            complement_setup()
     selectionFILE.close()
 
 #note_pwd = lambda:sys.stdout.write("note_pwd()")
@@ -668,43 +664,50 @@ def edit_note():
             
             global_data.note_file_directory = os.path.join(global_data.setup['notepath'][-1] , name)
             try:
-                os.stat(os.path.join(global_data.note_file_directory , 'setup'))
-                global_data.local_setup = True
+                os.stat(os.path.join(global_data.note_file_directory , "DATA" , 'setup'))
             except os.error as e:
-                global_data.local_setup = False
-            if(global_data.local_setup):
-                local_setup_path = os.path.join(global_data.note_file_directory ,  
-                        'setup')
-                get_setup(local_setup_path)  
-            global_data.note_note_path = os.path.join(global_data.note_file_directory , "DATA" , '.' + name + '.note')
-            global_data.note_info_path = os.path.join(global_data.note_file_directory , "DATA" , '.' + name)
+                sys.stdout.write('No setup in note.')
+                if(lock != None): rel_lock()
+                exit(1)
+            local_setup_path = os.path.join(global_data.note_file_directory , "DATA" , 
+                    'setup')
+            get_setup(global_data.setup , local_setup_path)  
+            complement_setup()
+            global_data.note_note_path = os.path.join(global_data.note_file_directory , "DATA" , name + '.note')
+            global_data.note_info_path = os.path.join(global_data.note_file_directory , "DATA" , name)
             global_data.note_tex_path = os.path.join(global_data.note_file_directory , "DATA" , name + global_data.setup['ext'][-1])
      
-            info = open(global_data.note_info_path)
-            lines = info.readlines()
+#            info = open(global_data.note_info_path)
+#            lines = info.readlines()
+
+            this_setup = {}
+            get_setup(this_setup , global_data.note_info_path)
+
+            print global_data.note_key_words
+#            global_data.note_title = this_setup["this_title"][-1]
+#            global_data.note_key_words = this_setup["this_key"]
+#            global_data.note_date = this_setup["this_date"]
+#            global_data.note_uuid4 = this_setup["this_uuid4"][-1]
+#            global_data.note_name = this_setup["this_name"][-1]
+
+
             if(global_data.note_title == None):
-                global_data.note_title = lines[0]
+                global_data.note_title = this_setup["this_title"][-1]
             if(global_data.note_key_words == None):
                 global_data.note_key_words = []
             if(global_data.note_yek_words == None):
                 global_data.note_yek_words = []
-            global_data.note_key_words.extend(lines[1].strip().split('\\'))
-            global_data.note_key_words.pop(-1)
+            global_data.note_key_words.extend(this_setup["this_key"])
             for word in global_data.note_yek_words:
                 try:
                     global_data.note_key_words.remove(word)
                 except AttributeError as e:
                     print word + ' not found in note key words.'
-            global_data.note_date = []
-            global_data.note_date.append(lines[2].strip())
-            global_data.note_date.append(lines[3].strip())
-            global_data.note_date.append(lines[4].strip())
-            global_data.note_date.append(lines[5].strip())
-            global_data.note_date.append(lines[6].strip())
-            global_data.note_uuid4 = lines[7].strip()
-            global_data.note_name = lines[8].strip()
+            global_data.note_date = this_setup["this_date"]
+            global_data.note_uuid4 = this_setup["this_uuid4"][-1] 
+            global_data.note_name = this_setup["this_name"][-1]
 
-            info.close()
+#            info.close()
             
             open(global_data.note_note_path , 'w').close()
             note = open(global_data.note_note_path , 'w')
@@ -722,17 +725,16 @@ def edit_note():
             note.close()
             open(global_data.note_info_path , 'w').close()
             info = open(global_data.note_info_path , 'w')
-            info.write(global_data.note_title.strip() + '\n')
+            info.write("this_title=" + global_data.note_title.strip() + '\n')
             for word in global_data.note_key_words:
-                info.write(word + '\\')
-            info.write('\n')
-            info.write(global_data.note_date[0] + '\n')
-            info.write(global_data.note_date[1] + '\n')
-            info.write(global_data.note_date[2] + '\n')
-            info.write(global_data.note_date[3] + '\n')
-            info.write(global_data.note_date[4] + '\n')
-            info.write(global_data.note_uuid4 + '\n')
-            info.write(global_data.note_name + '\n')
+                info.write("this_key=" + word + '\n')
+            info.write("this_date=" + global_data.note_date[0] + '\n')
+            info.write("this_date=" + global_data.note_date[1] + '\n')
+            info.write("this_date=" + global_data.note_date[2] + '\n')
+            info.write("this_date=" + global_data.note_date[3] + '\n')
+            info.write("this_date=" + global_data.note_date[4] + '\n')
+            info.write("this_uuid4=" + global_data.note_uuid4 + '\n')
+            info.write("this_name=" + global_data.note_name + '\n')
 
             info.close()
             if(not global_data.note_files == None):
@@ -742,15 +744,18 @@ def edit_note():
             os.chdir(global_data.note_file_directory)
             os.system(global_data.setup['convert'][-1] + ' ' + global_data.note_tex_path)
             os.chdir(current)
-            if(global_data.local_setup):
-                global_data.setup = {}
-                get_setup(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'setup'))
+            global_data.setup = {}
+            get_setup(global_data.setup , os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'setup'))
+            complement_setup()
 
 def note_and():
     global_data.search_functions.append([and_funct , global_data.arguments])
 
 def note_or():
     global_data.search_functions.append([or_funct , global_data.arguments])
+
+def note_not():
+    global_data.search_functions.append([not_funct , global_data.arguments])
 
 ###
 ### GLOBAL LOCK
@@ -966,7 +971,17 @@ Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1m-and\x1b[0m <number> ...
 Search for notes that contain any of the keywords. 
 Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1m-or\x1b[0m <number> ...
 """
+        ] ,
+        'not' :
+        [
+            note_not
+            , -1
+            , """
+Search for notes that contain any of the keywords. 
+Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1m-or\x1b[0m <number> ...
+"""
         ]
+
 }
 
 lock_verbs = {
@@ -1094,62 +1109,78 @@ def or_funct(kes , stack , arg):
         result = a or b
         stack.append(result)
     else:
-        sys.stdout.write('The -and expects 2 arguments in the stack.\n');
+        sys.stdout.write('The -or expects 2 arguments in the stack.\n');
+        if(lock != None): rel_lock()
+        exit(1)
+
+def not_funct(kes , stack , arg):
+    result = True
+    if(len(arg) != 0):
+        for key in arg:
+            if((key in kes)):
+                result = False
+        stack.append(result)
+    elif(len(stack) == 1):
+        a = stack.pop()
+        result = not a
+        stack.append(result)
+    else:
+        sys.stdout.write('The -not expects 1 arguments in the stack.\n');
         if(lock != None): rel_lock()
         exit(1)
 
 def open_note(f):
     global_data.note_file_directory = os.path.join(global_data.setup['notepath'][-1] , f)
     try:
-        os.stat(os.path.join(global_data.note_file_directory , 'setup'))
-        global_data.local_setup = True
+        os.stat(os.path.join(global_data.note_file_directory , "DATA" , 'setup'))
     except os.error as e:
-        global_data.local_setup = False
-    if(global_data.local_setup):
-        local_setup_path = os.path.join(global_data.note_file_directory ,  
-                'setup')
-        get_setup(local_setup_path)  
-    global_data.note_note_path = os.path.join(global_data.note_file_directory , "DATA" , '.' + f + '.note')
-    global_data.note_info_path = os.path.join(global_data.note_file_directory , "DATA" , '.' + f)
+        sys.stdout.write('No setup file in note.')
+        if(lock != None): rel_lock()
+        exit(1)
+    local_setup_path = os.path.join(global_data.note_file_directory , "DATA" , 
+            'setup')
+    get_setup(global_data.setup , local_setup_path)  
+    complement_setup()
+    global_data.note_note_path = os.path.join(global_data.note_file_directory , "DATA" , f + '.note')
+    global_data.note_info_path = os.path.join(global_data.note_file_directory , "DATA" , f)
     global_data.note_tex_path = os.path.join(global_data.note_file_directory , "DATA" , f + global_data.setup['ext'][-1])
 
-    info = open(global_data.note_info_path)
-    lines = info.readlines()
-    global_data.note_title = lines[0]
-    global_data.note_key_words = lines[1].strip().split('\\')
-    global_data.note_key_words.pop(-1)
-    global_data.note_date = []
-    global_data.note_date.append(lines[2].strip())
-    global_data.note_date.append(lines[3].strip())
-    global_data.note_date.append(lines[4].strip())
-    global_data.note_date.append(lines[5].strip())
-    global_data.note_date.append(lines[6].strip())
-    global_data.note_uuid4 = lines[7].strip()
-    global_data.note_name = lines[8].strip()
+    this_setup = {}
+    get_setup(this_setup , global_data.note_info_path)
 
-    info.close()
-    if(global_data.local_setup):
-        global_data.setup = {}
-        get_setup(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'setup'))
+    global_data.note_title = this_setup["this_title"][-1]
+    global_data.note_key_words = this_setup["this_key"]
+    global_data.note_date = this_setup["this_date"]
+    global_data.note_uuid4 = this_setup["this_uuid4"][-1]
+    global_data.note_name = this_setup["this_name"][-1]
 
-def get_setup(file_path):
+    global_data.setup = {}
+    get_setup(global_data.setup , os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'setup'))
+    complement_setup()
+
+def get_setup(setup , file_path):
     setupFILE = open(file_path , 'r')
     for line in setupFILE.readlines():
         if((not line.strip() == '') and (not line.strip()[0] == '#')):
-            words = re.split('=' , line)
-            if(len(words) != 2):
+            eqnb = 0
+            while(line[eqnb] != '='):
+                eqnb = eqnb + 1
+            if(line[eqnb] != '='):
                 sys.stdout.write('Syntax wrong in setup file, schould be key=value.')
                 if(lock != None): rel_lock()
                 exit(1)
+            words = [line[0:eqnb] , line[eqnb + 1:]]
             key = words[0].strip()
             value = words[1].strip()
-            if key in global_data.setup.keys():
-                val = global_data.setup[key]
+            if key in setup.keys():
+                val = setup[key]
                 val.append(value)
-                global_data.setup.update({key : val})
+                setup.update({key : val})
             else:
-                global_data.setup.update({key : [value]})
+                setup.update({key : [value]})
     setupFILE.close()
+
+def complement_setup():
     if(not 'notepath' in global_data.setup.keys()):
         global_data.setup.update({'notepath' : [os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'NOTES')]})
     if(not 'trashpath' in global_data.setup.keys()):
@@ -1242,7 +1273,8 @@ The setup file is short, relax.
         rel_lock()
         
         if(all_ok): 
-            get_setup(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'setup'))
+            get_setup(global_data.setup , os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'setup'))
+            complement_setup()
             note_act()
     except Exception as e:
         print e.__doc__

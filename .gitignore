@@ -6,3 +6,4 @@ setup
 .lock
 TEST/TEST_NOTE
 TEST/testresults
+py3
