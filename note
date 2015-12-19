@@ -864,7 +864,7 @@ remove the "badkey"
 * Add note title. 
 This is used with "create".
 Usage:
-\t\x1b[1mnote\x1b[0m ... \x1b[1mtitle\x1b[0m <single title> ...
+\t\x1b[1mnote\x1b[0m ... \x1b[1m-title\x1b[0m <single title> ...
 Example:
 \tnote -key key1 some -title "some title" -create
 creates note with title "some title" and keywords 
@@ -888,8 +888,15 @@ will look for keywords "some", "note" in NOTES.
             files_note
             , -1
             , """
-Add files to note. 
-Usage:\n\t\x1b[1m\x1b[1mnote\x1b[0m\x1b[0m ... \x1b[1mfiles\x1b[0m <one or more files to add to note> ...
+* Add files to note. 
+This is used with "create"
+to add files to note.
+Usage:
+\t\x1b[1m\x1b[1mnote\x1b[0m\x1b[0m ... \x1b[1m-files\x1b[0m <one or more files to add to note> ...
+Example:
+\tnote -key some key -title "some title" -files some_file1 some_file2 -create
+will create a note with key "some" "note" title "some title"
+and will add "some_file1" and "some_file2" to the note "FILES".
             """
         ] ,
         'cd' :
@@ -897,8 +904,12 @@ Usage:\n\t\x1b[1m\x1b[1mnote\x1b[0m\x1b[0m ... \x1b[1mfiles\x1b[0m <one or more 
             note_cd
             , 1
             , """
-Change directory to note. 
-Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mcd\x1b[0m <number of note> ...
+* Change directory to note. 
+Usage:
+\t\x1b[1mnote\x1b[0m ... \x1b[1m-cd\x1b[0m <number of note> ...
+Example:
+\tnote -cd 1
+change directory to 1'st note "FILES".
             """
         ] ,
         'pwd' :
@@ -906,8 +917,11 @@ Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mcd\x1b[0m <number of note> ...
             note_pwd
             , 1
             , """
-Print note directory to stdout. 
-Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mpwd\x1b[0m <number of note> ...
+* Print note directory to stdout. 
+Usage:
+\t\x1b[1mnote\x1b[0m ... \x1b[1m-pwd\x1b[0m <number of note> ...
+Example:
+\techo $(note -pwd 1)
             """
         ] ,
         'pdf' :
@@ -915,8 +929,13 @@ Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mpwd\x1b[0m <number of note> ...
             note_pdf
             , 1
             , """
-View note. 
-Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mpdf\x1b[0m <number of note> ...
+* View note. 
+Usage:
+\t\x1b[1mnote\x1b[0m ... \x1b[1m-pdf\x1b[0m <number of note> ...
+Example:
+\tnote -pdf 1
+"pdf" does not mean that "portable document format"
+is assumed.
             """
         ] ,
         'view' :
@@ -924,16 +943,26 @@ Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mpdf\x1b[0m <number of note> ...
             note_view
             , 1
             , """
-View note. 
-Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mview\x1b[0m <number of note> ..."""
+* View note. 
+Usage:
+\t\x1b[1mnote\x1b[0m ... \x1b[1mview\x1b[0m <number of note> ...
+Example:
+\tnote -view 1
+will print note info to stdout.
+"""
         ] ,
         'localsetup' :
         [
             note_local
             , 0
             , """
-There will be a local setup file. 
-Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mlocalsetup\x1b[0m ...
+* There will be a local setup file. 
+This is used with "create".
+Usage:
+\t\x1b[1mnote\x1b[0m ... \x1b[1mlocalsetup\x1b[0m ...
+Example:
+\tnote -key key1 -title "title" -localsetup -create
+will create a note and edit the local setup.
             """
         ] ,
         'date' :
@@ -941,8 +970,13 @@ Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mlocalsetup\x1b[0m ...
             date_note
             , 1
             , """
-Select date range. 
-Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mdate\x1b[0m "D M Y" "D M Y" ...
+* Select date range. 
+Usage:
+\t\x1b[1mnote\x1b[0m ... \x1b[1mdate\x1b[0m "D M Y" "D M Y" ...
+Example:
+\tnote -date "01 01 2010" "01 01 2015" -find
+will find notes creted between the first of January
+2010 and the first of January 2015.
             """
         ] ,
         'help' :
@@ -950,8 +984,10 @@ Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mdate\x1b[0m "D M Y" "D M Y" ...
             note_help
             , 1
             , """
-Print help. 
-Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mhelp\x1b[0m ...
+* Print help. 
+Usage:\t\x1b[1mnote\x1b[0m ... \x1b[1mhelp\x1b[0m ...
+Example:
+\tnote -help
             """
         ] ,
         'short' :
@@ -959,17 +995,25 @@ Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mhelp\x1b[0m ...
             short_notes
             , 1
             , """
-List all notes in the NOTES directory. 
-Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mshort\x1b[0m ...
-            """
+* List notes in the NOTES directory. 
+Usage:
+\t\x1b[1mnote\x1b[0m ... \x1b[1mshort\x1b[0m ...
+Example:
+\tnote -short
+similar as "list" but the information
+printed to stdout is shorter.
+"""
         ],
         'keywords' :
         [
             key_notes
             , 1
             , """
-Print keywords. 
-Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mkewwords\x1b[0m  ...
+* Print all the keywords. 
+Usage:
+\t\x1b[1mnote\x1b[0m ... \x1b[1m-kewwords\x1b[0m  ...
+Example:
+\tnote -keywords
             """
         ],
         'more' :
@@ -977,8 +1021,12 @@ Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mkewwords\x1b[0m  ...
             max_notes
             , 1
             , """
-Additional number of notes to displ. 
-Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mmore\x1b[0m <number> ...
+* Additional number of notes to displ. 
+Usage:
+\t\x1b[1mnote\x1b[0m ... \x1b[1m-more\x1b[0m <number> ...
+Example:
+\tnote -more 10 -list
+will list 10 more notes.
 """
         ],
         'and' :
@@ -986,8 +1034,12 @@ Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mmore\x1b[0m <number> ...
             note_and
             , -1
             , """
-Search for notes that contain all the keywords. 
-Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1m-and\x1b[0m <number> ...
+* Search for notes that contain all the keywords. 
+Usage:
+\t\x1b[1mnote\x1b[0m ... \x1b[1m-and\x1b[0m <number> ...
+Example:
+\tnote -and A B C -find
+will find notes that contain "A" and "B" and "C"
 """
         ]
 ,
@@ -996,8 +1048,12 @@ Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1m-and\x1b[0m <number> ...
             note_or
             , -1
             , """
-Search for notes that contain any of the keywords. 
-Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1m-or\x1b[0m <number> ...
+* Search for notes that contain any of the keywords. 
+Usage:
+\t\x1b[1mnote\x1b[0m ... \x1b[1m-or\x1b[0m <number> ...
+Example:
+\tnote -or A B C -find
+will find notes that contain "A" or "B" or "C"
 """
         ] ,
         'not' :
@@ -1005,8 +1061,12 @@ Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1m-or\x1b[0m <number> ...
             note_not
             , -1
             , """
-Search for notes that contain any of the keywords. 
-Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1m-or\x1b[0m <number> ...
+* Search for notes that contain none of the keywords. 
+Usage:
+\t\x1b[1mnote\x1b[0m ... \x1b[1m-not\x1b[0m <number> ...
+Example:
+\tnote -not A B C -find
+will find notes that don't contain "A" and "B" and "C"
 """
         ]
 
@@ -1018,8 +1078,12 @@ lock_verbs = {
             create_note
             , 0 
             , """
-Create new note, the keywords have to be set. 
-Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mcreate\x1b[0m
+* Create new note, the keywords have to be set. 
+Usage:
+\t\x1b[1mnote\x1b[0m ... \x1b[1mcreate\x1b[0m
+Example:
+\tnote -key key1 key2 -title "some title" -create
+creates a note with key "key1" "key2" and title "some title".
             """
         ] , 
         'move' :
@@ -1027,8 +1091,11 @@ Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mcreate\x1b[0m
             note_move
             , 1
             , """
-Move note to trash. 
-Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mmove\x1b[0m <number of note> ...
+* Move note to trash. 
+Usage:
+\t\x1b[1mnote\x1b[0m ... \x1b[1mmove\x1b[0m <number of note> ...
+Example:
+\tnote -move 1
             """
         ],
         'edit' :
@@ -1037,7 +1104,10 @@ Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1mmove\x1b[0m <number of note> ...
             , 1
             , """
 Edit note. 
-Usage:\n\t\x1b[1mnote\x1b[0m ... \x1b[1medit\x1b[0m <number of note> ...
+Usage:
+\t\x1b[1mnote\x1b[0m ... \x1b[1medit\x1b[0m <number of note> ...
+Example:
+\tnote -y 
             """
         ]
 }
