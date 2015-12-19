@@ -157,7 +157,6 @@ def create_note():
     global_data.note_tex_path = os.path.join(global_data.note_file_directory , "DATA" , "".join([global_data.note_date[0],"_",global_data.note_uuid4]) + 
             global_data.setup['ext'][-1])
     template = open(global_data.setup['textemplate'][-1] , 'r')
-    output = open(global_data.note_tex_path , 'w')
     if(global_data.note_yek_words == None):
         global_data.note_yek_words = []
     for word in global_data.note_yek_words:
@@ -165,11 +164,9 @@ def create_note():
             global_data.note_key_words.remove(word)
         except AttributeError as e:
             print word + ' not found in note key words.'
+    output = open(global_data.note_tex_path , 'w')
     for line in template.readlines():
-        if(not re.search(r'begin_note' , line) == None):
-            output.write(line)
-        else:
-            output.write(line)
+        output.write(line)
     output.close()
     template.close()
     note = open(global_data.note_note_path , 'w')
@@ -407,7 +404,8 @@ def note_pdf():
                     'setup')
             get_setup(global_data.setup , local_setup_path) 
             complement_setup()
-            os.system(global_data.setup['viewer'][-1] + ' ' + os.path.join(line.strip() , name + global_data.setup['res'][-1]))
+            os.system(global_data.setup['viewer'][-1] + ' ' +
+                    os.path.join(line.strip() , "DATA" , name + global_data.setup['res'][-1]))
             global_data.setup = {}
             get_setup(global_data.setup , os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'setup'))
             complement_setup()
