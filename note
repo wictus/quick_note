@@ -829,7 +829,7 @@ will list the notes.
             , -1
             , """
 * Add keywords to note. 
-This is used togather with "create".
+This is used together with "create".
 Usage:
 \t\x1b[1mnote\x1b[0m ... \x1b[1m-key\x1b[0m <one or more key words> ... -create
 Example:
@@ -843,7 +843,7 @@ will create a note with the keywords "key1" and "somekey2".
             , -1
             , """
 * Remove keywords from note.
-This is used togather with "create".
+This is used together with "create".
 Usage:
 \t\x1b[1mnote\x1b[0m ... \x1b[1m-yek\x1b[0m <one or more key words> ... -create
 Example:
@@ -1107,7 +1107,7 @@ Edit note.
 Usage:
 \t\x1b[1mnote\x1b[0m ... \x1b[1medit\x1b[0m <number of note> ...
 Example:
-\tnote -y 
+\tnote -yek oldkey -key newkey -edit 1 
             """
         ]
 }
