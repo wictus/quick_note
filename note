@@ -746,13 +746,26 @@ def edit_note():
             complement_setup()
 
 def note_and():
-    global_data.search_functions.append([and_funct , global_data.arguments])
+    arg = []
+    for argument in global_data.arguments:
+        arg.append(unicodedata.normalize('NFKD',
+            argument.decode("utf-8")).encode('ascii','ignore').upper())
+    global_data.search_functions.append([and_funct , arg])
 
 def note_or():
-    global_data.search_functions.append([or_funct , global_data.arguments])
+    arg = []
+    for argument in global_data.arguments:
+        arg.append(unicodedata.normalize('NFKD',
+            argument.decode("utf-8")).encode('ascii','ignore').upper())
+    global_data.search_functions.append([or_funct , arg])
 
 def note_not():
-    global_data.search_functions.append([not_funct , global_data.arguments])
+    arg = []
+    for argument in global_data.arguments:
+        arg.append(unicodedata.normalize('NFKD',
+            argument.decode("utf-8")).encode('ascii','ignore').upper())
+
+    global_data.search_functions.append([not_funct , arg])
 
 ###
 ### GLOBAL LOCK
@@ -945,7 +958,7 @@ is assumed.
             , """
 * View note. 
 Usage:
-\t\x1b[1mnote\x1b[0m ... \x1b[1mview\x1b[0m <number of note> ...
+\t\x1b[1mnote\x1b[0m ... \x1b[1m-view\x1b[0m <number of note> ...
 Example:
 \tnote -view 1
 will print note info to stdout.
@@ -959,7 +972,7 @@ will print note info to stdout.
 * There will be a local setup file. 
 This is used with "create".
 Usage:
-\t\x1b[1mnote\x1b[0m ... \x1b[1mlocalsetup\x1b[0m ...
+\t\x1b[1mnote\x1b[0m ... \x1b[1m-localsetup\x1b[0m ...
 Example:
 \tnote -key key1 -title "title" -localsetup -create
 will create a note and edit the local setup.
@@ -972,7 +985,7 @@ will create a note and edit the local setup.
             , """
 * Select date range. 
 Usage:
-\t\x1b[1mnote\x1b[0m ... \x1b[1mdate\x1b[0m "D M Y" "D M Y" ...
+\t\x1b[1mnote\x1b[0m ... \x1b[1m-date\x1b[0m "D.M.Y" "D.M.Y" ...
 Example:
 \tnote -date "01 01 2010" "01 01 2015" -find
 will find notes creted between the first of January
@@ -985,7 +998,7 @@ will find notes creted between the first of January
             , 1
             , """
 * Print help. 
-Usage:\t\x1b[1mnote\x1b[0m ... \x1b[1mhelp\x1b[0m ...
+Usage:\t\x1b[1mnote\x1b[0m ... \x1b[1m-help\x1b[0m ...
 Example:
 \tnote -help
             """
@@ -997,12 +1010,12 @@ Example:
             , """
 * List notes in the NOTES directory. 
 Usage:
-\t\x1b[1mnote\x1b[0m ... \x1b[1mshort\x1b[0m ...
+\t\x1b[1mnote\x1b[0m ... \x1b[1m-short\x1b[0m ...
 Example:
 \tnote -short
 similar as "list" but the information
 printed to stdout is shorter.
-"""
+            """
         ],
         'keywords' :
         [
@@ -1093,7 +1106,7 @@ creates a note with key "key1" "key2" and title "some title".
             , """
 * Move note to trash. 
 Usage:
-\t\x1b[1mnote\x1b[0m ... \x1b[1mmove\x1b[0m <number of note> ...
+\t\x1b[1mnote\x1b[0m ... \x1b[1m-move\x1b[0m <number of note> ...
 Example:
 \tnote -move 1
             """
@@ -1103,9 +1116,9 @@ Example:
             edit_note
             , 1
             , """
-Edit note. 
+* Edit note. 
 Usage:
-\t\x1b[1mnote\x1b[0m ... \x1b[1medit\x1b[0m <number of note> ...
+\t\x1b[1mnote\x1b[0m ... \x1b[1m-edit\x1b[0m <number of note> ...
 Example:
 \tnote -yek oldkey -key newkey -edit 1 
             """
