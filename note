@@ -137,9 +137,10 @@ def create_note():
         sys.stdout.write('Could not create note directory after ' + str(attempt) + ' attempts.')
         if(lock != None): rel_lock()
         exit(1)
-    
+
     local_setup_path = os.path.join(global_data.note_file_directory , "DATA" ,  
-            'setup')
+            "".join([global_data.note_date[0],"_",global_data.note_uuid4]) +
+            '.setup')
     local = open(local_setup_path , 'w')
     for key in global_data.setup:
         local.write("".join([key , '=' , global_data.setup[key][-1] , '\n']))
@@ -395,13 +396,13 @@ def note_pdf():
             name = os.path.basename(os.path.realpath(line.strip()))
             global_data.note_file_directory = os.path.join(global_data.setup['notepath'][-1] , name)
             try:
-                os.stat(os.path.join(global_data.note_file_directory , "DATA" , 'setup'))
+                os.stat(os.path.join(global_data.note_file_directory , "DATA" , name + '.setup'))
             except os.error as e:
                 sys.stdout.write('No setup in note.')
                 if(lock != None): rel_lock()
                 exit(1)
             local_setup_path = os.path.join(global_data.note_file_directory , "DATA" ,  
-                    'setup')
+                    name + '.setup')
             get_setup(global_data.setup , local_setup_path) 
             complement_setup()
             os.system(global_data.setup['viewer'][-1] + ' ' +
@@ -661,13 +662,13 @@ def edit_note():
             
             global_data.note_file_directory = os.path.join(global_data.setup['notepath'][-1] , name)
             try:
-                os.stat(os.path.join(global_data.note_file_directory , "DATA" , 'setup'))
+                os.stat(os.path.join(global_data.note_file_directory , "DATA" , name + '.setup'))
             except os.error as e:
                 sys.stdout.write('No setup in note.')
                 if(lock != None): rel_lock()
                 exit(1)
             local_setup_path = os.path.join(global_data.note_file_directory , "DATA" , 
-                    'setup')
+                    name + '.setup')
             get_setup(global_data.setup , local_setup_path)  
             complement_setup()
             global_data.note_note_path = os.path.join(global_data.note_file_directory , "DATA" , name + '.note')
@@ -1243,13 +1244,13 @@ def not_funct(kes , stack , arg):
 def open_note(f):
     global_data.note_file_directory = os.path.join(global_data.setup['notepath'][-1] , f)
     try:
-        os.stat(os.path.join(global_data.note_file_directory , "DATA" , 'setup'))
+        os.stat(os.path.join(global_data.note_file_directory , "DATA" , f + '.setup'))
     except os.error as e:
         sys.stdout.write('No setup file in note.')
         if(lock != None): rel_lock()
         exit(1)
     local_setup_path = os.path.join(global_data.note_file_directory , "DATA" , 
-            'setup')
+            f + '.setup')
     get_setup(global_data.setup , local_setup_path)  
     complement_setup()
     global_data.note_note_path = os.path.join(global_data.note_file_directory , "DATA" , f + '.note')
