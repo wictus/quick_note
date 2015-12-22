@@ -143,7 +143,8 @@ def create_note():
             '.setup')
     local = open(local_setup_path , 'w')
     for key in global_data.setup:
-        local.write("".join([key , '=' , global_data.setup[key][-1] , '\n']))
+        if(key != "notepath" and key != "trashpath"):
+            local.write("".join([key , '=' , global_data.setup[key][-1] , '\n']))
     local.close()
 
     if(global_data.local_setup):
@@ -1183,8 +1184,6 @@ def note_act():
         sys.stdout.write('Something wrong with command.\n')
         if(lock != None): rel_lock()
         exit(1)              
-    current_verb = arg[1:]
-       
 
 
 ###
@@ -1314,47 +1313,6 @@ if(__name__ == '__main__'):
         get_lock()
 
         all_ok = True
-        try:
-            os.stat(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'NOTES'))
-        except os.error as e:
-            all_ok = False
-            print "No NOTES directory found in:"
-            print os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'NOTES')
-            create = (raw_input("Create this directory? [y/n] ") == "y")
-            if(create):
-                os.mkdir(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'NOTES'))
-            else:
-                if(lock != None): rel_lock()
-                exit(0)
-                
-        try:
-            os.stat(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'TRASH'))
-        except os.error as e:
-            all_ok = False
-            print "No TRASH directory found in:"
-            print os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'TRASH')
-            create = (raw_input("Create this directory? [y/n] ") == "y")
-            if(create):
-                os.mkdir(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'TRASH'))
-            else:
-                if(lock != None): rel_lock()
-                exit(0)
-
-        try:
-            os.stat(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'TEMPLATE'))
-        except os.error as e:
-            all_ok = False
-            print "No TEMPLATE directory found in:" 
-            print os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'TEMPLATE')
-            create = (raw_input("Create this directory? [y/n] ") == "y")
-            if(create):
-                os.mkdir(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'TEMPLATE'))
-                f = open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'TEMPLATE' , 'template.tex') , 'w')
-                f.write(global_data.TEMPLATE)
-                f.close()
-            else:
-                if(lock != None): rel_lock()
-                exit(0)
 
         try:
             os.stat(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'setup'))
@@ -1377,6 +1335,55 @@ The setup file is short, relax.
             f.write(global_data.SETUP)
             f.close()
 
+        get_setup(global_data.setup , os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'setup'))
+
+        if(not "notepath" in global_data.setup.keys()):
+            try:
+                os.stat(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'NOTES'))
+            except os.error as e:
+                all_ok = False
+                print "No NOTES directory found in:"
+                print os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'NOTES')
+                create = (raw_input("Create this directory? [y/n] ") == "y")
+                if(create):
+                    os.mkdir(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'NOTES'))
+                else:
+                    if(lock != None): rel_lock()
+                    exit(0)
+                
+        if(not "trashpath" in global_data.setup.keys()):
+            try:
+                os.stat(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'TRASH'))
+            except os.error as e:
+                all_ok = False
+                print "No TRASH directory found in:"
+                print os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'TRASH')
+                create = (raw_input("Create this directory? [y/n] ") == "y")
+                if(create):
+                    os.mkdir(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'TRASH'))
+                else:
+                    if(lock != None): rel_lock()
+                    exit(0)
+
+        if(not "template" in global_data.setup.keys()):
+            try:
+                os.stat(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'TEMPLATE'))
+            except os.error as e:
+                all_ok = False
+                print "No TEMPLATE directory found in:" 
+                print os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'TEMPLATE')
+                create = (raw_input("Create this directory? [y/n] ") == "y")
+                if(create):
+                    os.mkdir(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'TEMPLATE'))
+                    f = open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'TEMPLATE' , 'template.tex') , 'w')
+                    f.write(global_data.TEMPLATE)
+                    f.close()
+                else:
+                    if(lock != None): rel_lock()
+                    exit(0)
+
+        complement_setup()
+
         try:
             os.stat(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection'))
         except os.error as e:
@@ -1385,8 +1392,6 @@ The setup file is short, relax.
         rel_lock()
         
         if(all_ok): 
-            get_setup(global_data.setup , os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'setup'))
-            complement_setup()
             note_act()
     except Exception as e:
         print e.__doc__
