@@ -867,12 +867,12 @@ will list the notes.
             note_paste
             , 0 
             , """
-* Paste files from note direcotry to current director. 
+* Paste files from note direcotry to current directory. 
 Usage:
 \t\x1b[1mnote\x1b[0m ... \x1b[1m-paste\x1b[0m ... <note number>
 Example:
 \tnote -paste 1
-will list the notes.
+will paste the contents of note 1 to current dir.
             """
         ] ,
 
