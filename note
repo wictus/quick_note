@@ -235,9 +235,9 @@ def list_notes():
         i += 1
         if(i > global_data.note_number - int(global_data.setup['max'][-1]) - global_data.max_plus):
             sys.stdout.write('\x1b[1;35m')
-            print '----------------------------------------------'
+            print '----------------------------------------------------------'
             print str(global_data.note_number - i + 1) + '\t' + f
-            print '----------------------------------------------'
+            print '----------------------------------------------------------'
             sys.stdout.write('\x1b[0m')
             print '* key words:'
             for word in global_data.note_key_words:
@@ -343,9 +343,9 @@ def find_note():
         i += 1
         if(i > global_data.note_number - int(global_data.setup['max'][-1]) - global_data.max_plus):
             sys.stdout.write('\x1b[1;35m')
-            print '----------------------------------------------'
+            print '----------------------------------------------------------'
             print str(global_data.note_number - i + 1) + '\t' + result[1]
-            print '----------------------------------------------'
+            print '----------------------------------------------------------'
             sys.stdout.write('\x1b[0m')
             print '* keywords: '
             for key in result[3]:
@@ -446,9 +446,9 @@ def note_view():
             open_note(name)  
                 
             print '\x1b[1;35m'
-            print '----------------------------------------------'
+            print '----------------------------------------------------------'
             print str(num) + '\t' + name
-            print '----------------------------------------------'
+            print '----------------------------------------------------------'
             print '\x1b[0m'
  
             print '* keywords:'
@@ -585,9 +585,9 @@ def short_notes():
         i += 1
         if(i > global_data.note_number - int(global_data.setup['max'][-1]) - global_data.max_plus):
             sys.stdout.write('\x1b[1;35m')
-            print '----------------------------------------------'
+            print '----------------------------------------------------------'
             print str(global_data.note_number - i + 1) + '\t' + f
-            print '----------------------------------------------'
+            print '----------------------------------------------------------'
             sys.stdout.write('\x1b[0m')
             print '* key words:'
             for word in global_data.note_key_words:
