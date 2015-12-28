@@ -363,6 +363,30 @@ def find_note():
 def files_note():
     global_data.note_files = global_data.arguments
 
+def note_paste():
+    if(len(global_data.arguments) != 1):
+        sys.stdout.write('Only one argument for note paste.')
+        if(lock != None): rel_lock()
+        exit(1)
+    selectionFILE = open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection') , 'r+')
+    num = global_data.note_number - int(global_data.arguments[0]) + 1
+    i = 0
+    for line in selectionFILE.readlines():
+        i += 1
+        if(i == num):
+            files = os.listdir(os.path.join(line.strip() , "FILES"))
+            paste = True
+            if(len(files) > 1):
+                print "More then one file in note."
+                for dr in files:
+                    print dr
+                paste = raw_input("Paste all [y/n] ? ") == "y"
+            if paste:
+                for dr in files:
+                    os.system("cp" + os.path.join(line.strip() , "FILES" , dr) + " ./")
+    selectionFILE.close()
+
+
 #note_cd = lambda:sys.stdout.write("note_cd()")
 
 def note_cd():
@@ -740,7 +764,7 @@ def edit_note():
                 for f in global_data.note_files:
                     os.system('cp -r ' + f + ' ' + global_data.note_file_directory)
             current = os.getcwd()
-            os.chdir(global_data.note_file_directory)
+            os.chdir(os.path.join(global_data.note_file_directory , "DATA"))
             os.system(global_data.setup['convert'][-1] + ' ' + global_data.note_tex_path)
             os.chdir(current)
             global_data.setup = {}
@@ -838,6 +862,20 @@ Example:
 will list the notes.
             """
         ] ,
+        'paste' : 
+        [
+            note_paste
+            , 0 
+            , """
+* Paste files from note direcotry to current director. 
+Usage:
+\t\x1b[1mnote\x1b[0m ... \x1b[1m-paste\x1b[0m ... <note number>
+Example:
+\tnote -paste 1
+will list the notes.
+            """
+        ] ,
+
         'key' : 
         [
             key_words
