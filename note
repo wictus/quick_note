@@ -375,15 +375,16 @@ def note_paste():
         i += 1
         if(i == num):
             files = os.listdir(os.path.join(line.strip() , "FILES"))
-            paste = True
             if(len(files) > 1):
                 print "More then one file in note."
                 for dr in files:
                     print dr
-                paste = raw_input("Paste all [y/n] ? ") == "y"
-            if paste:
+                    paste = raw_input("Paste [y/n] ? ") == "y"
+                    if paste:
+                        os.system("cp " + os.path.join(line.strip() , "FILES" , dr) + " ./")
+            else:
                 for dr in files:
-                    os.system("cp" + os.path.join(line.strip() , "FILES" , dr) + " ./")
+                    os.system("cp " + os.path.join(line.strip() , "FILES" , dr) + " ./")
     selectionFILE.close()
 
 
