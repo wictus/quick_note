@@ -379,7 +379,7 @@ def note_paste():
                 print "More then one file in note."
                 for dr in files:
                     print dr
-                    paste = raw_input("Paste [y/n] ? ") == "y"
+                    paste = raw_input("Paste this file [y/n] ? ") == "y"
                     if paste:
                         os.system("cp " + os.path.join(line.strip() , "FILES" , dr) + " ./")
             else:
