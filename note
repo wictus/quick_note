@@ -1188,7 +1188,7 @@ def note_act():
                     get_lock()
                     lock_verbs[current_verb][0]()
                     global_data.arguments = []
-                    rel_lock()
+                    if(lock != None): rel_lock()
                 elif(current_verb in verbs and current_verb != None):
                     verbs[current_verb][0]()
                     global_data.arguments = []
@@ -1212,7 +1212,7 @@ def note_act():
             get_lock()
             lock_verbs[current_verb][0]()
             global_data.arguments = []
-            rel_lock()
+            if(lock != None): rel_lock()
         elif(current_verb in verbs and current_verb != None):
             verbs[current_verb][0]()
             global_data.arguments = []
@@ -1431,7 +1431,7 @@ The setup file is short, relax.
         except os.error as e:
             open(os.path.join(os.path.dirname(os.path.realpath(__file__)) , '.selection') , 'w').close()
 
-        rel_lock()
+        if(lock != None): rel_lock()
         
         if(all_ok): 
             note_act()
@@ -1441,5 +1441,5 @@ The setup file is short, relax.
         logging.error(traceback.format_exc())
         if(not lock == None):
             print 'Cleaning up, exiting.'
-            rel_lock()
+            if(lock != None): rel_lock()
     
