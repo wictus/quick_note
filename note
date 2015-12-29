@@ -1377,6 +1377,7 @@ The setup file is short, relax.
             f.write(global_data.SETUP)
             f.close()
 
+        if(lock != None): rel_lock()
 
         get_setup(global_data.setup , os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'setup'))
 
