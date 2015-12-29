@@ -1354,6 +1354,8 @@ if(__name__ == '__main__'):
     try:
         all_ok = True
 
+        get_lock()
+
         try:
             os.stat(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'setup'))
         except os.error as e:
@@ -1376,6 +1378,8 @@ The setup file is short, relax.
             f.close()
 
         get_setup(global_data.setup , os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'setup'))
+
+        if(lock != None): rel_lock()
 
         get_lock()
 
